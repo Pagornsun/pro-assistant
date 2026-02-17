@@ -38,7 +38,7 @@ const richMenuObject = {
         // Top Left: New Task
         {
             bounds: { x: 0, y: 0, width: 833, height: 843 },
-            action: { type: 'message', text: 'New Task' }
+            action: { type: 'uri', uri: `https://liff.line.me/${LIFF_ID}/?redirect=${encodeURIComponent('/dashboard?action=new-task')}` }
         },
         // Top Center: Calendar
         {

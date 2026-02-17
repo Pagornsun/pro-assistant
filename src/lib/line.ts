@@ -70,21 +70,105 @@ async function saveChatMessage(userId: string, role: 'user' | 'assistant', messa
     });
 }
 
+import { getWelcomeFlexMessage } from './flex-welcome';
+
+// ... (previous imports)
+
+// Helper: Get or Create Profile
+async function getOrCreateProfile(lineUserId: string) {
+    // 1. Try to get existing profile
+    let { data: profile } = await supabaseAdmin
+        .from('profiles')
+        .select('id')
+        .eq('line_user_id', lineUserId)
+        .single();
+
+    if (profile) return profile;
+
+    // 2. If not found, create Auth User & Profile
+    const fakeEmail = `${lineUserId}@line.kinn.com`;
+
+    // Try to find existing auth user first to avoid conflict
+    const { data: searchResults } = await supabaseAdmin.auth.admin.listUsers();
+    const existingUser = searchResults?.users.find(u => u.email === fakeEmail);
+
+    let userId = existingUser?.id;
+
+    if (!userId) {
+        const { data: createdUser, error: createError } = await supabaseAdmin.auth.admin.createUser({
+            email: fakeEmail,
+            email_confirm: true,
+            user_metadata: { line_user_id: lineUserId }
+        });
+
+        if (createError) throw new Error(`Create Auth Error: ${createError.message}`);
+        userId = createdUser.user?.id;
+    }
+
+    if (!userId) throw new Error('User ID is undefined after creation');
+
+    // Create Profile
+    const { data: newProfile, error: profileCreateError } = await supabaseAdmin
+        .from('profiles')
+        .insert({
+            id: userId,
+            line_user_id: lineUserId,
+            tier: 'free'
+        })
+        .select('id')
+        .single();
+
+    if (profileCreateError) {
+        // Race condition check
+        if (profileCreateError.code === '23505') {
+            const { data: existing } = await supabaseAdmin
+                .from('profiles').select('id').eq('line_user_id', lineUserId).single();
+            if (existing) return existing;
+        }
+        throw new Error(`Create Profile Error: ${profileCreateError.message}`);
+    }
+
+    return newProfile;
+}
+
 export async function handleLineEvent(event: WebhookEvent) {
+    const lineUserId = event.source.userId;
+    if (!lineUserId) return null;
+
+    // 1. Handle "Follow" Event (User adds bot)
+    if (event.type === 'follow') {
+        console.log(`[Follow] New user: ${lineUserId}`);
+        try {
+            await showLoadingAnimation(lineUserId);
+            const profile = await getOrCreateProfile(lineUserId);
+
+            // Send Welcome Message
+            await safeReply(event.replyToken, lineUserId, getWelcomeFlexMessage());
+            await saveChatMessage(profile.id, 'assistant', '[Sent Welcome Message]');
+            return { userId: lineUserId, type: 'follow' };
+        } catch (e: any) {
+            console.error('[Follow] Error:', e);
+            return null;
+        }
+    }
+
+    // 2. Handle Text Messages
     if (event.type !== 'message' || event.message.type !== 'text') {
         return null;
     }
 
     const userMessage = event.message.text;
-    const lineUserId = event.source.userId;
-
-    if (!lineUserId) return null;
 
     // Show loading animation immediately
     await showLoadingAnimation(lineUserId);
 
-    // Hardcoded Command: "New Task" (from Rich Menu) -> Open LIFF
+    // Hardcoded Command: "New Task" (Rich Menu)
     if (userMessage === 'New Task') {
+        // ... (Existing New Task logic - keep as is or can use getWelcomeFlexMessage if needed, but likely specific logic)
+        // For now, let's keep the existing logic or redirect to the same URI logic if needed.
+        // The user specifically asked for "New Task" to open modal. 
+        // We already fixed the Rich Menu to use URI, so this code might effectively be dead code for the button 
+        // BUT if user Types "New Task" manually, we should still handle it.
         const liffUrl = `https://liff.line.me/${process.env.NEXT_PUBLIC_LIFF_ID}?action=new-task`;
         await safeReply(event.replyToken, lineUserId, {
             type: 'flex',
@@ -95,37 +179,15 @@ export async function handleLineEvent(event: WebhookEvent) {
                     type: 'box',
                     layout: 'vertical',
                     contents: [
-                        {
-                            type: 'text',
-                            text: 'Create a New Task',
-                            weight: 'bold',
-                            size: 'xl',
-                            align: 'center'
-                        },
-                        {
-                            type: 'text',
-                            text: 'Click the button below to open the task form.',
-                            margin: 'md',
-                            align: 'center',
-                            size: 'sm',
-                            color: '#666666'
-                        }
+                        { type: 'text', text: 'Create a New Task', weight: 'bold', size: 'xl', align: 'center' },
+                        { type: 'text', text: 'Click the button below to open the task form.', margin: 'md', align: 'center', size: 'sm', color: '#666666' }
                     ]
                 },
                 footer: {
                     type: 'box',
                     layout: 'vertical',
                     contents: [
-                        {
-                            type: 'button',
-                            style: 'primary',
-                            action: {
-                                type: 'uri',
-                                label: 'Open Task Form',
-                                uri: liffUrl
-                            },
-                            color: '#2563EB'
-                        }
+                        { type: 'button', style: 'primary', action: { type: 'uri', label: 'Open Task Form', uri: liffUrl }, color: '#2563EB' }
                     ]
                 }
             }
@@ -133,104 +195,43 @@ export async function handleLineEvent(event: WebhookEvent) {
         return { userId: lineUserId, message: userMessage };
     }
 
-    try {
-        // 1. Get or Create Profile
-        let { data: profile, error: profileError } = await supabaseAdmin
-            .from('profiles')
-            .select('id')
-            .eq('line_user_id', lineUserId)
-            .single();
-
-        if (profileError && profileError.code === 'PGRST116') {
-            // ... (account creation logic remains same) ...
-            // Auto-create generic auth user first
-            const fakeEmail = `${lineUserId}@line.kinn.com`;
-
-            // 1. Try to fetch existing user first (to avoid duplicates)
-            let { data: { users }, error: fetchError } = await supabaseAdmin.auth.admin.listUsers();
-
-            let userId: string | undefined;
-
-            const { data: createdUser, error: createError } = await supabaseAdmin.auth.admin.createUser({
-                email: fakeEmail,
-                email_confirm: true,
-                user_metadata: { line_user_id: lineUserId }
-            });
-
-            if (createError) {
-                console.log('Create user failed, trying to find existing...', createError.message);
-                const { data: searchResults } = await supabaseAdmin.auth.admin.listUsers();
-                const existingUser = searchResults?.users.find(u => u.email === fakeEmail);
-
-                if (existingUser) {
-                    userId = existingUser.id;
-                } else {
-                    throw new Error(`Failed to create and failed to find user: ${createError.message}`);
-                }
-            } else {
-                if (!createdUser.user) throw new Error('Created user is null');
-                userId = createdUser.user.id;
-            }
-
-            if (!userId) throw new Error('Severe Error: User ID is undefined');
-
-            // Create profile using the Auth ID
-            const { data: newProfile, error: profileCreateError } = await supabaseAdmin
-                .from('profiles')
-                .insert({
-                    id: userId,
-                    line_user_id: lineUserId,
-                    tier: 'free'
-                })
-                .select('id')
-                .single();
-
-            if (profileCreateError) {
-                if (profileCreateError.code === '23505') {
-                    const { data: existingProfile } = await supabaseAdmin
-                        .from('profiles').select('id').eq('line_user_id', lineUserId).single();
-                    if (existingProfile) profile = existingProfile;
-                } else {
-                    throw new Error(`Create Profile Error: ${profileCreateError.message}`);
-                }
-            } else {
-                profile = newProfile;
-                const welcomeMsg = 'สวัสดีครับ! ยินดีต้อนรับสู่ ProAssistant ผมสร้างบัญชีให้คุณเรียบร้อยแล้ว! (ลองพิมพ์สั่งงานได้เลยครับ)';
-                await safeReply(event.replyToken, lineUserId, {
-                    type: 'text',
-                    text: welcomeMsg
-                });
-                await saveChatMessage(profile.id, 'assistant', welcomeMsg); // Save welcome message
-                return;
-            }
+    // Handle "Help", "Start", "Info" -> Welcome Message
+    if (/^(help|start|info|menu|สวัสดี|เริ่ม|เริ่มต้น|วิธีใช้)$/i.test(userMessage.trim())) {
+        try {
+            const profile = await getOrCreateProfile(lineUserId);
+            await safeReply(event.replyToken, lineUserId, getWelcomeFlexMessage());
+            await saveChatMessage(profile.id, 'assistant', '[Sent Welcome Message]');
+            return { userId: lineUserId, message: userMessage };
+        } catch (e: any) {
+            console.error('[Help] Error:', e);
+            await safeReply(event.replyToken, lineUserId, { type: 'text', text: 'Error loading help.' });
+            return null;
         }
+    }
 
-        if (!profile) throw new Error('Profile not found and creation failed.');
+    try {
+        // 3. Normal AI Chat Flow
+        const profile = await getOrCreateProfile(lineUserId);
 
-        // 2. Fetch Chat History
+        // Fetch Chat History
         const history = await getChatHistory(profile.id);
 
-        // 3. Save User Message
+        // Save User Message
         await saveChatMessage(profile.id, 'user', userMessage);
 
-        // 4. Analyze with Gemini (with History)
+        // Analyze with Gemini
         let analysis;
         try {
             analysis = await analyzeTask(userMessage, history);
-            console.log("Gemini Analysis Result:", analysis);
         } catch (geminiError: any) {
             console.error('Gemini Error:', geminiError);
             const errorMsg = `ระบบ AI ขัดข้องชั่วคราว: ${geminiError.message || 'Unknown Error'}`;
-            await safeReply(event.replyToken, lineUserId, {
-                type: 'text',
-                text: errorMsg
-            });
+            await safeReply(event.replyToken, lineUserId, { type: 'text', text: errorMsg });
             await saveChatMessage(profile.id, 'assistant', errorMsg);
             return;
         }
 
         if (analysis.isTask) {
-            // 5. Save Task
             const { error: taskError } = await supabaseAdmin
                 .from('tasks')
                 .insert({
@@ -246,10 +247,7 @@ export async function handleLineEvent(event: WebhookEvent) {
             await saveChatMessage(profile.id, 'assistant', `Created Task: ${analysis.title}`);
         } else {
             const replyMsg = analysis.replyText || 'ผมเป็นเลขาช่วยจัดการงานครับ แจ้งให้ผมช่วยจำงานได้เลยนะครับ';
-            await safeReply(event.replyToken, lineUserId, {
-                type: 'text',
-                text: replyMsg
-            });
+            await safeReply(event.replyToken, lineUserId, { type: 'text', text: replyMsg });
             await saveChatMessage(profile.id, 'assistant', replyMsg);
         }
 
