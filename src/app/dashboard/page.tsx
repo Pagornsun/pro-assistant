@@ -18,6 +18,7 @@ import {
 } from 'lucide-react';
 
 import { NewTaskModal } from '@/components/dashboard/NewTaskModal';
+import { SettingsModal } from '@/components/dashboard/SettingsModal';
 
 export default function UserDashboard() {
     const { profile, isLoggedIn, error } = useLiff();
@@ -25,6 +26,19 @@ export default function UserDashboard() {
     const [membership, setMembership] = useState<string>('free');
     const [loading, setLoading] = useState(true);
     const [isTaskModalOpen, setIsTaskModalOpen] = useState(false);
+    const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+    const [paymentStatus, setPaymentStatus] = useState<string | null>(null);
+
+    // Check query params for payment status
+    useEffect(() => {
+        if (typeof window !== 'undefined') {
+            const urlParams = new URLSearchParams(window.location.search);
+            if (urlParams.get('payment') === 'success') {
+                setPaymentStatus('success');
+                setTimeout(() => setPaymentStatus(null), 5000);
+            }
+        }
+    }, []);
 
     // Date Formatting
     const today = new Date();
@@ -145,7 +159,10 @@ export default function UserDashboard() {
                         </button>
 
                         {/* Assistant Settings */}
-                        <button className="group flex flex-col items-start justify-between p-5 h-36 rounded-2xl bg-white dark:bg-zinc-800 border border-slate-100 dark:border-zinc-700 shadow-sm hover:shadow-md hover:-translate-y-1 transition-all duration-300">
+                        <button
+                            onClick={() => setIsSettingsOpen(true)}
+                            className="group flex flex-col items-start justify-between p-5 h-36 rounded-2xl bg-white dark:bg-zinc-800 border border-slate-100 dark:border-zinc-700 shadow-sm hover:shadow-md hover:-translate-y-1 transition-all duration-300"
+                        >
                             <div className="w-10 h-10 rounded-full bg-slate-100 dark:bg-zinc-700 text-slate-600 dark:text-slate-300 flex items-center justify-center group-hover:bg-primary group-hover:text-white transition-colors">
                                 <Settings size={24} />
                             </div>
@@ -214,6 +231,14 @@ export default function UserDashboard() {
 
             {/* Modals */}
             <NewTaskModal isOpen={isTaskModalOpen} onClose={() => setIsTaskModalOpen(false)} />
+            <SettingsModal isOpen={isSettingsOpen} onClose={() => setIsSettingsOpen(false)} membership={membership} />
+
+            {/* Payment Toast */}
+            {paymentStatus === 'success' && (
+                <div className="fixed bottom-6 left-6 right-6 bg-emerald-500 text-white p-4 rounded-xl shadow-xl flex items-center justify-center gap-2 animate-in slide-in-from-bottom-5">
+                    <CheckCircle size={20} /> Payment Successful! Welcome to Pro.
+                </div>
+            )}
         </div>
     );
 }
