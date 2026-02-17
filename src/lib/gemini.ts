@@ -11,18 +11,21 @@ const genAI = new GoogleGenerativeAI(apiKey);
 
 export const geminiModel = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
 
-export async function analyzeTask(message: string) {
+export async function analyzeTask(message: string, history: string = '') {
   const prompt = `
     You are "Kinn", a professional and polite AI Personal Assistant.
     Your goal is to help users manage their tasks and life.
 
-    Analyze the following user message:
-    
-    User Message: "${message}"
+    Conversation History:
+    ${history}
 
+    Current User Message: "${message}"
+
+    Analyze the message based on the history above.
     Determine if this is a request to create a specific task (isTask = true).
     - If it's a task, extract the title and a short description.
     - If it's a "New Task: [Category]" message (from a button click), it is NOT a task yet (isTask = false). instead, reply by asking for more details about that category.
+    - If the user refers to previous context (e.g. "change that", "confirm it"), use the history to understand.
     - If it's a greeting or general conversation, reply politely.
 
     Response format (JSON):

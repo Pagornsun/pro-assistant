@@ -42,6 +42,29 @@ async function showLoadingAnimation(userId: string) {
     }
 }
 
+// Helper to get chat history
+async function getChatHistory(userId: string): Promise<string> {
+    const { data: history } = await supabaseAdmin
+        .from('chat_history')
+        .select('role, message')
+        .eq('user_id', userId)
+        .order('created_at', { ascending: false })
+        .limit(5); // Get last 5 messages
+
+    if (!history || history.length === 0) return '';
+
+    return history.reverse().map(h => `${h.role}: ${h.message}`).join('\n');
+}
+
+// Helper to save chat message
+async function saveChatMessage(userId: string, role: 'user' | 'assistant', message: string) {
+    await supabaseAdmin.from('chat_history').insert({
+        user_id: userId,
+        role: role,
+        message: message
+    });
+}
+
 export async function handleLineEvent(event: WebhookEvent) {
     if (event.type !== 'message' || event.message.type !== 'text') {
         return null;
@@ -64,6 +87,7 @@ export async function handleLineEvent(event: WebhookEvent) {
             .single();
 
         if (profileError && profileError.code === 'PGRST116') {
+            // ... (account creation logic remains same) ...
             // Auto-create generic auth user first
             const fakeEmail = `${lineUserId}@line.kinn.com`;
 
@@ -116,32 +140,42 @@ export async function handleLineEvent(event: WebhookEvent) {
                 }
             } else {
                 profile = newProfile;
+                const welcomeMsg = 'สวัสดีครับ! ยินดีต้อนรับสู่ ProAssistant ผมสร้างบัญชีให้คุณเรียบร้อยแล้ว! (ลองพิมพ์สั่งงานได้เลยครับ)';
                 await safeReply(event.replyToken, lineUserId, {
                     type: 'text',
-                    text: 'สวัสดีครับ! ยินดีต้อนรับสู่ ProAssistant ผมสร้างบัญชีให้คุณเรียบร้อยแล้ว! (ลองพิมพ์สั่งงานได้เลยครับ)'
+                    text: welcomeMsg
                 });
-                return; // CRITICAL: Stop here to prevent double-reply error
+                await saveChatMessage(profile.id, 'assistant', welcomeMsg); // Save welcome message
+                return;
             }
         }
 
         if (!profile) throw new Error('Profile not found and creation failed.');
 
-        // 2. Analyze with Gemini
+        // 2. Fetch Chat History
+        const history = await getChatHistory(profile.id);
+
+        // 3. Save User Message
+        await saveChatMessage(profile.id, 'user', userMessage);
+
+        // 4. Analyze with Gemini (with History)
         let analysis;
         try {
-            analysis = await analyzeTask(userMessage);
+            analysis = await analyzeTask(userMessage, history);
             console.log("Gemini Analysis Result:", analysis);
         } catch (geminiError: any) {
             console.error('Gemini Error:', geminiError);
+            const errorMsg = `ระบบ AI ขัดข้องชั่วคราว: ${geminiError.message || 'Unknown Error'}`;
             await safeReply(event.replyToken, lineUserId, {
                 type: 'text',
-                text: `ระบบ AI ขัดข้องชั่วคราว: ${geminiError.message || 'Unknown Error'}`
+                text: errorMsg
             });
+            await saveChatMessage(profile.id, 'assistant', errorMsg);
             return;
         }
 
         if (analysis.isTask) {
-            // 3. Save Task
+            // 5. Save Task
             const { error: taskError } = await supabaseAdmin
                 .from('tasks')
                 .insert({
@@ -154,11 +188,14 @@ export async function handleLineEvent(event: WebhookEvent) {
             if (taskError) throw new Error(`Save Task Error: ${taskError.message}`);
 
             await safeReply(event.replyToken, lineUserId, getTaskFlexMessage(analysis.title, analysis.description));
+            await saveChatMessage(profile.id, 'assistant', `Created Task: ${analysis.title}`);
         } else {
+            const replyMsg = analysis.replyText || 'ผมเป็นเลขาช่วยจัดการงานครับ แจ้งให้ผมช่วยจำงานได้เลยนะครับ';
             await safeReply(event.replyToken, lineUserId, {
                 type: 'text',
-                text: analysis.replyText || 'ผมเป็นเลขาช่วยจัดการงานครับ แจ้งให้ผมช่วยจำงานได้เลยนะครับ'
+                text: replyMsg
             });
+            await saveChatMessage(profile.id, 'assistant', replyMsg);
         }
 
     } catch (error: any) {
