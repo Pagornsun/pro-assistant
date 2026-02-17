@@ -1,6 +1,7 @@
 import { ClientConfig, Client, WebhookEvent, TextMessage } from '@line/bot-sdk';
 import { analyzeTask } from './gemini';
 import { supabaseAdmin } from './supabase';
+import { getTaskFlexMessage } from './flex';
 
 // Hardcoded for safety
 const config: ClientConfig = {
@@ -11,7 +12,7 @@ const config: ClientConfig = {
 export const lineClient = new Client(config);
 
 // Helper to safely reply (fallback to push if token invalid)
-async function safeReply(replyToken: string, userId: string, message: TextMessage) {
+async function safeReply(replyToken: string, userId: string, message: any) { // Type 'any' to support FlexMessage and TextMessage
     try {
         await lineClient.replyMessage(replyToken, message);
     } catch (error: any) {
@@ -152,10 +153,7 @@ export async function handleLineEvent(event: WebhookEvent) {
 
             if (taskError) throw new Error(`Save Task Error: ${taskError.message}`);
 
-            await safeReply(event.replyToken, lineUserId, {
-                type: 'text',
-                text: `รับทราบครับ! บันทึกงาน "${analysis.title}" แล้ว\nสถานะ: Pending`
-            });
+            await safeReply(event.replyToken, lineUserId, getTaskFlexMessage(analysis.title, analysis.description));
         } else {
             await safeReply(event.replyToken, lineUserId, {
                 type: 'text',
