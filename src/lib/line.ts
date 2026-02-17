@@ -4,8 +4,13 @@ import { supabaseAdmin } from './supabase';
 import { getTaskFlexMessage } from './flex';
 
 // Hardcoded for safety
+// Helper to clean the token
+const cleanToken = (token: string) => {
+    return token.replace(/^(Bearer\s+|LINE_CHANNEL_ACCESS_TOKEN=|"|')+/yi, '').replace(/("|')$/, '').trim();
+};
+
 const config: ClientConfig = {
-    channelAccessToken: process.env.LINE_CHANNEL_ACCESS_TOKEN || '',
+    channelAccessToken: cleanToken(process.env.LINE_CHANNEL_ACCESS_TOKEN || ''),
     channelSecret: process.env.LINE_CHANNEL_SECRET || '',
 };
 
