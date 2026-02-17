@@ -1,13 +1,26 @@
 import { createClient } from '@supabase/supabase-js'
 
-// Fallback to empty string to prevent build errors, but runtime will fail if missing
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://placeholder.supabase.co';
+const isValidUrl = (urlString: string) => {
+    try {
+        return Boolean(new URL(urlString));
+    } catch (e) {
+        return false;
+    }
+}
+
+// Fallback to placeholder if env var is missing OR invalid
+const getSupabaseUrl = () => {
+    let url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    if (!url || !isValidUrl(url)) {
+        console.warn('⚠️ Supabase URL is missing or invalid. Using placeholder.');
+        return 'https://placeholder.supabase.co';
+    }
+    return url;
+};
+
+const supabaseUrl = getSupabaseUrl();
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'placeholder-key';
 const supabaseServiceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY || 'placeholder-key';
-
-if (!process.env.NEXT_PUBLIC_SUPABASE_URL) {
-    console.warn('⚠️ Metrics: NEXT_PUBLIC_SUPABASE_URL is missing during build time. Using placeholder.');
-}
 
 // Public client for client-side interactions
 export const supabase = createClient(supabaseUrl, supabaseAnonKey)
