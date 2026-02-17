@@ -1,6 +1,7 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
 
-const apiKey = (process.env.GEMINI_API_KEY || '').replace(/"/g, '').trim();
+// Hardcoded for safety
+const apiKey = 'AIzaSyCJp-_TRQOm5pYZXBSJtbV6idZ0j6SvJiI';
 
 if (!apiKey) {
   console.error("Warning: GEMINI_API_KEY is missing!");
