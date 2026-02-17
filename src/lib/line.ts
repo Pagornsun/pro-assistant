@@ -140,7 +140,7 @@ export async function handleLineEvent(event: WebhookEvent) {
         } else {
             await safeReply(event.replyToken, lineUserId, {
                 type: 'text',
-                text: `ผมเป็นเลขาช่วยจัดการงานครับ แจ้งให้ผมช่วยจำงานได้เลยนะครับ`
+                text: analysis.replyText || 'ผมเป็นเลขาช่วยจัดการงานครับ แจ้งให้ผมช่วยจำงานได้เลยนะครับ'
             });
         }
 
