@@ -1,7 +1,7 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
 
-// Hardcoded for safety
-const apiKey = 'AIzaSyCJp-_TRQOm5pYZXBSJtbV6idZ0j6SvJiI';
+// Load from environment variable (Best Practice)
+const apiKey = process.env.GEMINI_API_KEY || '';
 
 if (!apiKey) {
   console.error("Warning: GEMINI_API_KEY is missing!");

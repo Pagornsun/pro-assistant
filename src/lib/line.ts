@@ -5,8 +5,8 @@ import { getTaskFlexMessage } from './flex';
 
 // Hardcoded for safety
 const config: ClientConfig = {
-    channelAccessToken: 'Ogs1Yy4SaoX+HSQPmriUw9Ck/JS/shIMrEU6wpK/pS9cDeeUIS6Uj0MlJKwJmoCShdUf7YGXkR7a6tpw1+djSYyC/TYKeb/ux0/Fr18UbmX3R0mNrq4mZpnbXyBQ8asiyRSc5Z6qq8+2svq7HIN+fwdB04t89/1O/w1cDnyilFU=',
-    channelSecret: '3a36d44e3de97938ce7bdde24d5cac8c',
+    channelAccessToken: process.env.LINE_CHANNEL_ACCESS_TOKEN || '',
+    channelSecret: process.env.LINE_CHANNEL_SECRET || '',
 };
 
 export const lineClient = new Client(config);
