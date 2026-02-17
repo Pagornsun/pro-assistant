@@ -9,7 +9,7 @@ if (!apiKey) {
 
 const genAI = new GoogleGenerativeAI(apiKey);
 
-export const geminiModel = genAI.getGenerativeModel({ model: "gemini-pro" });
+export const geminiModel = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
 
 export async function analyzeTask(message: string) {
   const prompt = `
