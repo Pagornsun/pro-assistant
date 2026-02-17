@@ -35,32 +35,32 @@ const richMenuObject = {
         // Top Left: New Task
         {
             bounds: { x: 0, y: 0, width: 833, height: 843 },
-            action: { type: 'message', text: 'New Task' } // Or URI if using LIFF
+            action: { type: 'message', text: 'New Task' }
         },
         // Top Center: Calendar
         {
             bounds: { x: 833, y: 0, width: 834, height: 843 },
-            action: { type: 'uri', uri: `https://liff.line.me/${env.NEXT_PUBLIC_LIFF_ID}/dashboard/calendar` }
+            action: { type: 'uri', uri: `https://liff.line.me/${env.NEXT_PUBLIC_LIFF_ID}/?redirect=/dashboard/calendar` }
         },
         // Top Right: Dashboard
         {
             bounds: { x: 1667, y: 0, width: 833, height: 843 },
-            action: { type: 'uri', uri: `https://liff.line.me/${env.NEXT_PUBLIC_LIFF_ID}` }
+            action: { type: 'uri', uri: `https://liff.line.me/${env.NEXT_PUBLIC_LIFF_ID}/?redirect=/dashboard` }
         },
         // Bottom Left: History/View All
         {
             bounds: { x: 0, y: 843, width: 833, height: 843 },
-            action: { type: 'uri', uri: `https://liff.line.me/${env.NEXT_PUBLIC_LIFF_ID}/dashboard/tasks` }
+            action: { type: 'uri', uri: `https://liff.line.me/${env.NEXT_PUBLIC_LIFF_ID}/?redirect=/dashboard/tasks` }
         },
         // Bottom Center: Help
         {
             bounds: { x: 833, y: 843, width: 834, height: 843 },
-            action: { type: 'uri', uri: `https://liff.line.me/${env.NEXT_PUBLIC_LIFF_ID}/dashboard/help` }
+            action: { type: 'uri', uri: `https://liff.line.me/${env.NEXT_PUBLIC_LIFF_ID}/?redirect=/dashboard/help` }
         },
         // Bottom Right: Settings
         {
             bounds: { x: 1667, y: 843, width: 833, height: 843 },
-            action: { type: 'uri', uri: `https://liff.line.me/${env.NEXT_PUBLIC_LIFF_ID}/dashboard?settings=true` }
+            action: { type: 'uri', uri: `https://liff.line.me/${env.NEXT_PUBLIC_LIFF_ID}/?redirect=${encodeURIComponent('/dashboard?settings=true')}` }
         }
     ]
 };
