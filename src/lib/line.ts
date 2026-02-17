@@ -25,6 +25,22 @@ async function safeReply(replyToken: string, userId: string, message: TextMessag
     }
 }
 
+// Helper to show loading animation
+async function showLoadingAnimation(userId: string) {
+    try {
+        await fetch('https://api.line.me/v2/bot/chat/loading/start', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${config.channelAccessToken}`,
+            },
+            body: JSON.stringify({ chatId: userId, loadingSeconds: 10 }),
+        });
+    } catch (e) {
+        console.error('Loading animation failed (non-fatal):', e);
+    }
+}
+
 export async function handleLineEvent(event: WebhookEvent) {
     if (event.type !== 'message' || event.message.type !== 'text') {
         return null;
@@ -34,6 +50,9 @@ export async function handleLineEvent(event: WebhookEvent) {
     const lineUserId = event.source.userId;
 
     if (!lineUserId) return null;
+
+    // Show loading animation immediately
+    await showLoadingAnimation(lineUserId);
 
     try {
         // 1. Get or Create Profile
