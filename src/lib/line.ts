@@ -10,6 +10,21 @@ const config: ClientConfig = {
 
 export const lineClient = new Client(config);
 
+// Helper to safely reply (fallback to push if token invalid)
+async function safeReply(replyToken: string, userId: string, message: TextMessage) {
+    try {
+        await lineClient.replyMessage(replyToken, message);
+    } catch (error: any) {
+        console.warn('Reply failed, trying Push...', error.message);
+        // Fallback to push message if reply token is invalid/expired
+        try {
+            await lineClient.pushMessage(userId, message);
+        } catch (pushError) {
+            console.error('Push also failed:', pushError);
+        }
+    }
+}
+
 export async function handleLineEvent(event: WebhookEvent) {
     if (event.type !== 'message' || event.message.type !== 'text') {
         return null;
@@ -34,11 +49,7 @@ export async function handleLineEvent(event: WebhookEvent) {
 
             // 1. Try to fetch existing user first (to avoid duplicates)
             let { data: { users }, error: fetchError } = await supabaseAdmin.auth.admin.listUsers();
-            // Note: listUsers() isn't efficient for lookup, but getUserByEmail isn't exposed in admin api easily in all versions.
-            // Better: just try create, if fail, assume exists? No, duplicat email returns error.
 
-            // Actually, we can assume if profile doesn't exist but user might.
-            // Let's try to create first.
             let userId: string | undefined;
 
             const { data: createdUser, error: createError } = await supabaseAdmin.auth.admin.createUser({
@@ -49,10 +60,7 @@ export async function handleLineEvent(event: WebhookEvent) {
 
             if (createError) {
                 console.log('Create user failed, trying to find existing...', createError.message);
-                // If failed, maybe they exist? invalid email?
-                // Try to find the user by email manually if creation failed
-                // This is a bit hacky but ensures we get the ID if they exist
-                const { data: searchResults, error: searchError } = await supabaseAdmin.auth.admin.listUsers();
+                const { data: searchResults } = await supabaseAdmin.auth.admin.listUsers();
                 const existingUser = searchResults?.users.find(u => u.email === fakeEmail);
 
                 if (existingUser) {
@@ -71,7 +79,7 @@ export async function handleLineEvent(event: WebhookEvent) {
             const { data: newProfile, error: profileCreateError } = await supabaseAdmin
                 .from('profiles')
                 .insert({
-                    id: userId, // Guaranteed to be string now
+                    id: userId,
                     line_user_id: lineUserId,
                     tier: 'free'
                 })
@@ -79,9 +87,7 @@ export async function handleLineEvent(event: WebhookEvent) {
                 .single();
 
             if (profileCreateError) {
-                // If duplicate key, maybe profile existed during race condition?
                 if (profileCreateError.code === '23505') {
-                    // Fetch again
                     const { data: existingProfile } = await supabaseAdmin
                         .from('profiles').select('id').eq('line_user_id', lineUserId).single();
                     if (existingProfile) profile = existingProfile;
@@ -90,7 +96,7 @@ export async function handleLineEvent(event: WebhookEvent) {
                 }
             } else {
                 profile = newProfile;
-                await lineClient.replyMessage(event.replyToken, {
+                await safeReply(event.replyToken, lineUserId, {
                     type: 'text',
                     text: 'สวัสดีครับ! ยินดีต้อนรับสู่ ProAssistant ผมสร้างบัญชีให้คุณเรียบร้อยแล้ว! (ลองพิมพ์สั่งงานได้เลยครับ)'
                 });
@@ -101,14 +107,13 @@ export async function handleLineEvent(event: WebhookEvent) {
         if (!profile) throw new Error('Profile not found and creation failed.');
 
         // 2. Analyze with Gemini
-        // Wrap in try-catch specific to Gemini to isolate AI failures
         let analysis;
         try {
             analysis = await analyzeTask(userMessage);
+            console.log("Gemini Analysis Result:", analysis);
         } catch (geminiError: any) {
             console.error('Gemini Error:', geminiError);
-            // Fallback if AI fails
-            await lineClient.replyMessage(event.replyToken, {
+            await safeReply(event.replyToken, lineUserId, {
                 type: 'text',
                 text: `ระบบ AI ขัดข้องชั่วคราว: ${geminiError.message || 'Unknown Error'}`
             });
@@ -128,30 +133,23 @@ export async function handleLineEvent(event: WebhookEvent) {
 
             if (taskError) throw new Error(`Save Task Error: ${taskError.message}`);
 
-            const reply: TextMessage = {
+            await safeReply(event.replyToken, lineUserId, {
                 type: 'text',
                 text: `รับทราบครับ! บันทึกงาน "${analysis.title}" แล้ว\nสถานะ: Pending`
-            };
-            await lineClient.replyMessage(event.replyToken, reply);
+            });
         } else {
-            const reply: TextMessage = {
+            await safeReply(event.replyToken, lineUserId, {
                 type: 'text',
                 text: `ผมเป็นเลขาช่วยจัดการงานครับ แจ้งให้ผมช่วยจำงานได้เลยนะครับ`
-            };
-            await lineClient.replyMessage(event.replyToken, reply);
+            });
         }
 
     } catch (error: any) {
         console.error('Error handling LINE event:', error);
-        // CRITICAL: Reply with error so user knows what happened
-        try {
-            await lineClient.replyMessage(event.replyToken, {
-                type: 'text',
-                text: `เกิดข้อผิดพลาด: ${error.message || 'Unknown Error'}`
-            });
-        } catch (replyError) {
-            console.error('Failed to send error message:', replyError);
-        }
+        await safeReply(event.replyToken, lineUserId, {
+            type: 'text',
+            text: `เกิดข้อผิดพลาด: ${error.message || 'Unknown Error'}`
+        });
     }
 
     return { userId: lineUserId, message: userMessage };
