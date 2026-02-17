@@ -12,6 +12,8 @@ export const metadata: Metadata = {
   description: "Your Personal Executive Assistant in LINE. Professional support, just one message away.",
 };
 
+import { LiffProvider } from "@/components/providers/LiffProvider";
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -22,7 +24,9 @@ export default function RootLayout({
       <body
         className={`${manrope.variable} antialiased font-manrope`}
       >
-        {children}
+        <LiffProvider>
+          {children}
+        </LiffProvider>
       </body>
     </html>
   );
