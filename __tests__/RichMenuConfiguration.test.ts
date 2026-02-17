@@ -13,12 +13,12 @@ const getRichMenuConfig = (liffId: string) => ({
     name: 'ProAssistant Main Menu',
     chatBarText: 'Menu',
     areas: [
-        { bounds: { x: 0, y: 0, width: 833, height: 843 }, action: { type: 'message', text: 'New Task' } },
-        { bounds: { x: 833, y: 0, width: 834, height: 843 }, action: { type: 'uri', uri: `https://liff.line.me/${liffId}/dashboard/calendar` } },
-        { bounds: { x: 1667, y: 0, width: 833, height: 843 }, action: { type: 'uri', uri: `https://liff.line.me/${liffId}` } },
-        { bounds: { x: 0, y: 843, width: 833, height: 843 }, action: { type: 'uri', uri: `https://liff.line.me/${liffId}/dashboard/tasks` } },
-        { bounds: { x: 833, y: 843, width: 834, height: 843 }, action: { type: 'uri', uri: `https://liff.line.me/${liffId}/dashboard/help` } },
-        { bounds: { x: 1667, y: 843, width: 833, height: 843 }, action: { type: 'uri', uri: `https://liff.line.me/${liffId}/dashboard?settings=true` } }
+        { bounds: { x: 0, y: 0, width: 833, height: 843 }, action: { type: 'uri', uri: `https://liff.line.me/${liffId}/?redirect=${encodeURIComponent('/dashboard?action=new-task')}` } },
+        { bounds: { x: 833, y: 0, width: 834, height: 843 }, action: { type: 'uri', uri: `https://liff.line.me/${liffId}/?redirect=/dashboard/calendar` } },
+        { bounds: { x: 1667, y: 0, width: 833, height: 843 }, action: { type: 'uri', uri: `https://liff.line.me/${liffId}/?redirect=/dashboard` } },
+        { bounds: { x: 0, y: 843, width: 833, height: 843 }, action: { type: 'uri', uri: `https://liff.line.me/${liffId}/?redirect=/dashboard/tasks` } },
+        { bounds: { x: 833, y: 843, width: 834, height: 843 }, action: { type: 'uri', uri: `https://liff.line.me/${liffId}/?redirect=/dashboard/help` } },
+        { bounds: { x: 1667, y: 843, width: 833, height: 843 }, action: { type: 'uri', uri: `https://liff.line.me/${liffId}/?redirect=${encodeURIComponent('/dashboard?settings=true')}` } }
     ]
 });
 
