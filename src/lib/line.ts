@@ -92,8 +92,9 @@ export async function handleLineEvent(event: WebhookEvent) {
                 profile = newProfile;
                 await lineClient.replyMessage(event.replyToken, {
                     type: 'text',
-                    text: 'สวัสดีครับ! ยินดีต้อนรับสู่ ProAssistant ผมสร้างบัญชีให้คุณเรียบร้อยแล้ว!'
+                    text: 'สวัสดีครับ! ยินดีต้อนรับสู่ ProAssistant ผมสร้างบัญชีให้คุณเรียบร้อยแล้ว! (ลองพิมพ์สั่งงานได้เลยครับ)'
                 });
+                return; // CRITICAL: Stop here to prevent double-reply error
             }
         }
 
