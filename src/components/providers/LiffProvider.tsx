@@ -26,7 +26,8 @@ export const LiffProvider = ({ children }: { children: ReactNode }) => {
     const [isLoggedIn, setIsLoggedIn] = useState(false);
 
     useEffect(() => {
-        const LIFF_ID = process.env.NEXT_PUBLIC_LIFF_ID || '';
+        // Fallback to hardcoded ID if env is missing or malformed (e.g. newlines)
+        const LIFF_ID = (process.env.NEXT_PUBLIC_LIFF_ID || '2009152458-0jLBmnkp').trim();
 
         if (!LIFF_ID) {
             console.warn('LIFF_ID is not defined in environment variables.');

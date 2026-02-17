@@ -23,6 +23,9 @@ const config = {
 
 const client = new Client(config);
 
+// Hardcode LIFF ID to ensure no newline issues from env vars
+const LIFF_ID = '2009152458-0jLBmnkp';
+
 const richMenuObject = {
     size: {
         width: 2500,
@@ -40,27 +43,27 @@ const richMenuObject = {
         // Top Center: Calendar
         {
             bounds: { x: 833, y: 0, width: 834, height: 843 },
-            action: { type: 'uri', uri: `https://liff.line.me/${env.NEXT_PUBLIC_LIFF_ID}/?redirect=/dashboard/calendar` }
+            action: { type: 'uri', uri: `https://liff.line.me/${LIFF_ID}/?redirect=/dashboard/calendar` }
         },
         // Top Right: Dashboard
         {
             bounds: { x: 1667, y: 0, width: 833, height: 843 },
-            action: { type: 'uri', uri: `https://liff.line.me/${env.NEXT_PUBLIC_LIFF_ID}/?redirect=/dashboard` }
+            action: { type: 'uri', uri: `https://liff.line.me/${LIFF_ID}/?redirect=/dashboard` }
         },
         // Bottom Left: History/View All
         {
             bounds: { x: 0, y: 843, width: 833, height: 843 },
-            action: { type: 'uri', uri: `https://liff.line.me/${env.NEXT_PUBLIC_LIFF_ID}/?redirect=/dashboard/tasks` }
+            action: { type: 'uri', uri: `https://liff.line.me/${LIFF_ID}/?redirect=/dashboard/tasks` }
         },
         // Bottom Center: Help
         {
             bounds: { x: 833, y: 843, width: 834, height: 843 },
-            action: { type: 'uri', uri: `https://liff.line.me/${env.NEXT_PUBLIC_LIFF_ID}/?redirect=/dashboard/help` }
+            action: { type: 'uri', uri: `https://liff.line.me/${LIFF_ID}/?redirect=/dashboard/help` }
         },
         // Bottom Right: Settings
         {
             bounds: { x: 1667, y: 843, width: 833, height: 843 },
-            action: { type: 'uri', uri: `https://liff.line.me/${env.NEXT_PUBLIC_LIFF_ID}/?redirect=${encodeURIComponent('/dashboard?settings=true')}` }
+            action: { type: 'uri', uri: `https://liff.line.me/${LIFF_ID}/?redirect=${encodeURIComponent('/dashboard?settings=true')}` }
         }
     ]
 };
