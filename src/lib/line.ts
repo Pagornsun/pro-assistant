@@ -78,6 +78,56 @@ export async function handleLineEvent(event: WebhookEvent) {
     // Show loading animation immediately
     await showLoadingAnimation(lineUserId);
 
+    // Hardcoded Command: "New Task" (from Rich Menu) -> Open LIFF
+    if (userMessage === 'New Task') {
+        const liffUrl = `https://liff.line.me/${process.env.NEXT_PUBLIC_LIFF_ID}?action=new-task`;
+        await safeReply(event.replyToken, lineUserId, {
+            type: 'flex',
+            altText: 'Create New Task',
+            contents: {
+                type: 'bubble',
+                body: {
+                    type: 'box',
+                    layout: 'vertical',
+                    contents: [
+                        {
+                            type: 'text',
+                            text: 'Create a New Task',
+                            weight: 'bold',
+                            size: 'xl',
+                            align: 'center'
+                        },
+                        {
+                            type: 'text',
+                            text: 'Click the button below to open the task form.',
+                            margin: 'md',
+                            align: 'center',
+                            size: 'sm',
+                            color: '#666666'
+                        }
+                    ]
+                },
+                footer: {
+                    type: 'box',
+                    layout: 'vertical',
+                    contents: [
+                        {
+                            type: 'button',
+                            style: 'primary',
+                            action: {
+                                type: 'uri',
+                                label: 'Open Task Form',
+                                uri: liffUrl
+                            },
+                            color: '#2563EB'
+                        }
+                    ]
+                }
+            }
+        });
+        return { userId: lineUserId, message: userMessage };
+    }
+
     try {
         // 1. Get or Create Profile
         let { data: profile, error: profileError } = await supabaseAdmin

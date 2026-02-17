@@ -30,13 +30,17 @@ export default function UserDashboard() {
     const [isSettingsOpen, setIsSettingsOpen] = useState(false);
     const [paymentStatus, setPaymentStatus] = useState<string | null>(null);
 
-    // Check query params for payment status
+    // Check query params for payment status or actions
     useEffect(() => {
         if (typeof window !== 'undefined') {
             const urlParams = new URLSearchParams(window.location.search);
             if (urlParams.get('payment') === 'success') {
                 setPaymentStatus('success');
                 setTimeout(() => setPaymentStatus(null), 5000);
+            }
+            // Auto-open New Task Modal
+            if (urlParams.get('action') === 'new-task') {
+                setIsTaskModalOpen(true);
             }
         }
     }, []);
