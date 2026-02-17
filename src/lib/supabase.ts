@@ -5,6 +5,10 @@ const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://placeholder
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'placeholder-key';
 const supabaseServiceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY || 'placeholder-key';
 
+if (!process.env.NEXT_PUBLIC_SUPABASE_URL) {
+    console.warn('⚠️ Metrics: NEXT_PUBLIC_SUPABASE_URL is missing during build time. Using placeholder.');
+}
+
 // Public client for client-side interactions
 export const supabase = createClient(supabaseUrl, supabaseAnonKey)
 
