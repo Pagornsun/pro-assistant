@@ -16,7 +16,7 @@ export async function POST(req: Request) {
 
         // 2. Create Checkout Session
         const session = await stripe.checkout.sessions.create({
-            payment_method_types: ['card', 'promptpay'], // Support PromptPay for Thailand
+            payment_method_types: ['card'], // Subscriptions usually require cards
             line_items: [
                 {
                     price: priceId,
