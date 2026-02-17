@@ -11,7 +11,7 @@ const isValidUrl = (urlString: string) => {
 // ULTRA-SAFE MODE: Hardcoded values only
 const supabaseUrl = 'https://dkefjnnhjeczebegpwjw.supabase.co';
 const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRrZWZqbm5oamVjemViZWdwd2p3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzExOTA0OTcsImV4cCI6MjA4Njc2NjQ5N30.etFdeBQItUZ2WuoykbvcbYoADRgYCFUVIIX35CedYqs';
-const supabaseServiceRoleKey = (process.env.SUPABASE_SERVICE_ROLE_KEY || '').replace(/"/g, '').trim() || 'placeholder-key';
+const supabaseServiceRoleKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRrZWZqbm5oamVjemViZWdwd2p3Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3MTE5MDQ5NywiZXhwIjoyMDg2NzY2NDk3fQ.C-kXcxAT2LFgu5ZVgqFc-dMPdoZRveVpXCmwXTWzSxQ';
 
 // Public client
 export const supabase = createClient(supabaseUrl, supabaseAnonKey);
