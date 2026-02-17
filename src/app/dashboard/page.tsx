@@ -56,25 +56,19 @@ export default function UserDashboard() {
     async function fetchUserData(lineUserId: string) {
         try {
             setLoading(true);
-            // 1. Get Profile & Membership
-            const { data: userProfile } = await supabase
-                .from('profiles')
-                .select('id, tier')
-                .eq('line_user_id', lineUserId)
-                .single();
 
-            if (userProfile) {
-                setMembership(userProfile.tier);
+            // Call our new Server-Side API to bypass RLS
+            const res = await fetch(`/api/dashboard/data?lineUserId=${lineUserId}`);
 
-                // 2. Get Tasks
-                const { data: userTasks } = await supabase
-                    .from('tasks')
-                    .select('*')
-                    .eq('user_id', userProfile.id)
-                    .order('created_at', { ascending: false })
-                    .limit(5); // Limit for "Recent Tasks" view
+            if (!res.ok) throw new Error('Failed to fetch data');
 
-                if (userTasks) setTasks(userTasks);
+            const data = await res.json();
+
+            if (data.profile) {
+                setMembership(data.membership);
+                if (data.tasks) {
+                    setTasks(data.tasks);
+                }
             }
         } catch (err) {
             console.error('Fetch Data Error:', err);

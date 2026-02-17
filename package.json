@@ -14,6 +14,7 @@
     "@line/bot-sdk": "^10.6.0",
     "@line/liff": "^2.27.3",
     "@supabase/supabase-js": "^2.95.3",
+    "jimp": "^0.22.10",
     "lucide-react": "^0.564.0",
     "next": "16.1.6",
     "react": "19.2.3",
