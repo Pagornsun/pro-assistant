@@ -11,11 +11,12 @@ import {
     Plane,      // Flight
     Utensils,   // Dinner
     Gift,       // Gift
-    ChevronRight,
-    X,
     CheckCircle,
-    Clock
+    Clock,
+    X,
+    ChevronRight,
 } from 'lucide-react';
+import Link from 'next/link';
 
 import { NewTaskModal } from '@/components/dashboard/NewTaskModal';
 import { SettingsModal } from '@/components/dashboard/SettingsModal';
@@ -151,12 +152,12 @@ export default function UserDashboard() {
                         </button>
 
                         {/* My Calendar */}
-                        <button className="group flex flex-col items-start justify-between p-5 h-36 rounded-2xl bg-white dark:bg-zinc-800 border border-slate-100 dark:border-zinc-700 shadow-sm hover:shadow-md hover:-translate-y-1 transition-all duration-300">
+                        <Link href="/dashboard/calendar" className="group flex flex-col items-start justify-between p-5 h-36 rounded-2xl bg-white dark:bg-zinc-800 border border-slate-100 dark:border-zinc-700 shadow-sm hover:shadow-md hover:-translate-y-1 transition-all duration-300">
                             <div className="w-10 h-10 rounded-full bg-primary/10 text-primary flex items-center justify-center group-hover:bg-primary group-hover:text-white transition-colors">
                                 <Calendar size={24} />
                             </div>
                             <span className="font-bold text-lg leading-tight text-slate-900 dark:text-white">My<br />Calendar</span>
-                        </button>
+                        </Link>
 
                         {/* Assistant Settings */}
                         <button
@@ -170,19 +171,19 @@ export default function UserDashboard() {
                         </button>
 
                         {/* Help Center */}
-                        <button className="group flex flex-col items-start justify-between p-5 h-36 rounded-2xl bg-white dark:bg-zinc-800 border border-slate-100 dark:border-zinc-700 shadow-sm hover:shadow-md hover:-translate-y-1 transition-all duration-300">
+                        <Link href="/dashboard/help" className="group flex flex-col items-start justify-between p-5 h-36 rounded-2xl bg-white dark:bg-zinc-800 border border-slate-100 dark:border-zinc-700 shadow-sm hover:shadow-md hover:-translate-y-1 transition-all duration-300">
                             <div className="w-10 h-10 rounded-full bg-slate-100 dark:bg-zinc-700 text-slate-600 dark:text-slate-300 flex items-center justify-center group-hover:bg-primary group-hover:text-white transition-colors">
                                 <Headphones size={24} />
                             </div>
                             <span className="font-bold text-lg leading-tight text-slate-900 dark:text-white">Help<br />Center</span>
-                        </button>
+                        </Link>
                     </div>
 
                     {/* Recent Tasks List */}
                     <div className="mb-4">
                         <div className="flex items-center justify-between mb-4">
                             <h3 className="text-lg font-bold text-slate-900 dark:text-white">Recent Tasks</h3>
-                            <a className="text-sm font-semibold text-primary hover:text-primary/80" href="#">View All</a>
+                            <Link className="text-sm font-semibold text-primary hover:text-primary/80" href="/dashboard/tasks">View All</Link>
                         </div>
 
                         <div className="flex flex-col gap-3">
