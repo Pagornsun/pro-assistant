@@ -34,8 +34,24 @@ export async function analyzeTask(message: string) {
     }
   `;
 
-  const result = await geminiModel.generateContent(prompt);
+  const result = await geminiModel.generateContent({
+    contents: [{ role: 'user', parts: [{ text: prompt }] }],
+    generationConfig: { responseMimeType: "application/json" } // Force JSON mode
+  });
+
   const response = await result.response;
-  const text = response.text().replace(/```json/g, '').replace(/```/g, '').trim();
-  return JSON.parse(text);
+  const text = response.text();
+
+  try {
+    return JSON.parse(text);
+  } catch (e) {
+    console.error("Failed to parse Gemini response as JSON:", text);
+    // Fallback: Treat as a general conversation if JSON fails
+    return {
+      isTask: false,
+      title: null,
+      description: null,
+      replyText: "ขอโทษครับ ผมมึนนิดหน่อย ลองใหม่อีกครั้งนะครับ 😅"
+    };
+  }
 }
