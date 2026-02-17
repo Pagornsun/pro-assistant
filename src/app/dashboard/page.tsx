@@ -17,11 +17,14 @@ import {
     Clock
 } from 'lucide-react';
 
+import { NewTaskModal } from '@/components/dashboard/NewTaskModal';
+
 export default function UserDashboard() {
     const { profile, isLoggedIn, error } = useLiff();
     const [tasks, setTasks] = useState<any[]>([]);
     const [membership, setMembership] = useState<string>('free');
     const [loading, setLoading] = useState(true);
+    const [isTaskModalOpen, setIsTaskModalOpen] = useState(false);
 
     // Date Formatting
     const today = new Date();
@@ -123,7 +126,10 @@ export default function UserDashboard() {
                     {/* Quick Task Grid */}
                     <div className="grid grid-cols-2 gap-4 mb-8">
                         {/* New Task (Primary Action) */}
-                        <button className="group relative flex flex-col items-start justify-between p-5 h-36 rounded-2xl bg-primary text-white shadow-lg shadow-primary/30 hover:shadow-primary/50 hover:-translate-y-1 transition-all duration-300">
+                        <button
+                            onClick={() => setIsTaskModalOpen(true)}
+                            className="group relative flex flex-col items-start justify-between p-5 h-36 rounded-2xl bg-primary text-white shadow-lg shadow-primary/30 hover:shadow-primary/50 hover:-translate-y-1 transition-all duration-300 active:scale-95"
+                        >
                             <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center backdrop-blur-sm group-hover:scale-110 transition-transform">
                                 <Plus size={24} />
                             </div>
@@ -180,8 +186,8 @@ export default function UserDashboard() {
                                         </div>
                                         <div className="flex flex-col items-end gap-1">
                                             <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold ${task.status === 'completed'
-                                                    ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-400'
-                                                    : 'bg-primary/10 text-primary'
+                                                ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-400'
+                                                : 'bg-primary/10 text-primary'
                                                 }`}>
                                                 {task.status === 'completed' ? 'Done' : 'Pending'}
                                             </span>
@@ -205,6 +211,9 @@ export default function UserDashboard() {
                     Desktop Preview Mode (Mobile First)
                 </div>
             </div>
+
+            {/* Modals */}
+            <NewTaskModal isOpen={isTaskModalOpen} onClose={() => setIsTaskModalOpen(false)} />
         </div>
     );
 }
