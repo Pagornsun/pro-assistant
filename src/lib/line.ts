@@ -2,9 +2,11 @@ import { ClientConfig, Client, WebhookEvent, TextMessage } from '@line/bot-sdk';
 import { analyzeTask } from './gemini';
 import { supabaseAdmin } from './supabase';
 
+const cleanEnv = (key: string | undefined) => key ? key.replace(/"/g, '').trim() : '';
+
 const config: ClientConfig = {
-    channelAccessToken: process.env.LINE_CHANNEL_ACCESS_TOKEN || '',
-    channelSecret: process.env.LINE_CHANNEL_SECRET || '',
+    channelAccessToken: cleanEnv(process.env.LINE_CHANNEL_ACCESS_TOKEN),
+    channelSecret: cleanEnv(process.env.LINE_CHANNEL_SECRET),
 };
 
 export const lineClient = new Client(config);

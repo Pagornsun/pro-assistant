@@ -8,22 +8,19 @@ const isValidUrl = (urlString: string) => {
     }
 }
 
-// Fallback to placeholder if env var is missing OR invalid
-const getSupabaseUrl = () => {
-    let url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-    if (!url || !isValidUrl(url)) {
-        console.warn('⚠️ Supabase URL is missing or invalid. Using placeholder.');
-        return 'https://placeholder.supabase.co';
-    }
-    return url;
-};
+// Hardcoded fallback to ensure build success even if env vars fail
+// Note: NEXT_PUBLIC keys are safe to expose in client bundle
+const HARDCODED_URL = 'https://dkefjnnhjeczebegpwjw.supabase.co';
+const HARDCODED_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRrZWZqbm5oamVjemViZWdwd2p3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzExOTA0OTcsImV4cCI6MjA4Njc2NjQ5N30.etFdeBQItUZ2WuoykbvcbYoADRgYCFUVIIX35CedYqs';
 
-const supabaseUrl = getSupabaseUrl();
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'placeholder-key';
-const supabaseServiceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY || 'placeholder-key';
+const cleanEnv = (key: string | undefined) => key ? key.replace(/"/g, '').trim() : '';
 
-// Public client for client-side interactions
-export const supabase = createClient(supabaseUrl, supabaseAnonKey)
+const supabaseUrl = cleanEnv(process.env.NEXT_PUBLIC_SUPABASE_URL) || HARDCODED_URL;
+const supabaseAnonKey = cleanEnv(process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) || HARDCODED_ANON;
+const supabaseServiceRoleKey = cleanEnv(process.env.SUPABASE_SERVICE_ROLE_KEY) || 'placeholder-key';
 
-// Admin client for server-side operations that bypass RLS (use with caution)
-export const supabaseAdmin = createClient(supabaseUrl, supabaseServiceRoleKey)
+// Public client
+export const supabase = createClient(supabaseUrl, supabaseAnonKey);
+
+// Admin client
+export const supabaseAdmin = createClient(supabaseUrl, supabaseServiceRoleKey);
