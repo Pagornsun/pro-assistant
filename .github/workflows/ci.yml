@@ -38,7 +38,10 @@ jobs:
           GEMINI_API_KEY: "mock-api-key"
 
       - name: Install Playwright Browsers
-        run: npx playwright install --with-deps
+        run: npx playwright install --with-deps chromium
+
+      - name: Check Playwright Version
+        run: npx playwright --version
 
       - name: Run E2E Tests (Playwright)
         run: npm run test:e2e
