@@ -252,6 +252,7 @@ export function NewTaskModal({ isOpen, onClose }: NewTaskModalProps) {
                                 <input
                                     type="text"
                                     value={title}
+                                    data-testid="task-title-input"
                                     onChange={(e) => { setTitle(e.target.value); setTitleError(null); }}
                                     className={`w-full px-4 py-3 rounded-xl border bg-slate-50 dark:bg-zinc-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all ${titleError ? 'border-red-400' : 'border-slate-200 dark:border-zinc-700'}`}
                                     placeholder="What do you need done?"
@@ -373,6 +374,7 @@ export function NewTaskModal({ isOpen, onClose }: NewTaskModalProps) {
                     {step === 'category' ? (
                         <button
                             onClick={handleNext}
+                            data-testid="task-next-btn"
                             className="w-full bg-primary hover:bg-blue-700 text-white font-bold py-4 rounded-xl shadow-lg shadow-blue-500/30 transition-all active:scale-[0.98] flex items-center justify-center gap-2 group"
                         >
                             Next <ArrowRight size={20} className="group-hover:translate-x-0.5 transition-transform" />
@@ -381,6 +383,7 @@ export function NewTaskModal({ isOpen, onClose }: NewTaskModalProps) {
                         <button
                             onClick={handleSubmit}
                             disabled={isSending}
+                            data-testid="task-submit-btn"
                             className="w-full bg-primary hover:bg-blue-700 text-white font-bold py-4 rounded-xl shadow-lg shadow-blue-500/30 transition-all active:scale-[0.98] flex items-center justify-center gap-2 group disabled:opacity-70 disabled:cursor-not-allowed"
                         >
                             {isSending ? (

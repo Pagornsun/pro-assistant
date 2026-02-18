@@ -4,7 +4,7 @@ import { supabaseAdmin } from './supabase';
 import { getTaskFlexMessage } from './flex';
 
 // Helper to clean the token
-const cleanToken = (token: string) => {
+export const cleanToken = (token: string) => {
     return token.replace(/^(Bearer\s+|LINE_CHANNEL_ACCESS_TOKEN=|"|')+/yi, '').replace(/("|')$/, '').trim();
 };
 
@@ -71,7 +71,7 @@ async function saveChatMessage(userId: string, role: 'user' | 'assistant', messa
 import { getWelcomeFlexMessage } from './flex-welcome';
 
 // Helper: Get or Create Profile
-async function getOrCreateProfile(lineUserId: string) {
+export async function getOrCreateProfile(lineUserId: string) {
     let { data: profile } = await supabaseAdmin.from('profiles').select('id').eq('line_user_id', lineUserId).single();
     if (profile) return profile;
 
@@ -110,7 +110,7 @@ async function getOrCreateProfile(lineUserId: string) {
 }
 
 // Helper: Download Content
-async function getMessageContent(messageId: string): Promise<Buffer> {
+export async function getMessageContent(messageId: string): Promise<Buffer> {
     const stream = await lineClient.getMessageContent(messageId);
     return new Promise((resolve, reject) => {
         const chunks: Buffer[] = [];

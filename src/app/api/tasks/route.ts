@@ -120,19 +120,39 @@ export async function POST(request: NextRequest) {
             }
         }
 
-        const { data: task, error: taskError } = await supabaseAdmin
+        const payload: any = {
+            user_id: profile.id,
+            title: input.title,
+            description: input.description ?? null,
+            due_date: input.due_date ?? null,
+            recurring_config: input.recurring_config ?? null,
+            tags: input.tags ?? [],
+            status: 'pending',
+        };
+
+        let { data: task, error: taskError } = await supabaseAdmin
             .from('tasks')
-            .insert({
+            .insert(payload)
+            .select()
+            .single();
+
+        // RESILIENT RETRY: If columns are missing (PGRST204), try basic insert
+        if (taskError && (taskError as any).code === 'PGRST204') {
+            console.warn('[POST /api/tasks] Schema mismatch detected, retrying with basic columns');
+            const basicPayload = {
                 user_id: profile.id,
                 title: input.title,
                 description: input.description ?? null,
-                due_date: input.due_date ?? null,
-                recurring_config: input.recurring_config ?? null, // ADDED
-                tags: input.tags ?? [], // ADDED
                 status: 'pending',
-            })
-            .select()
-            .single();
+            };
+            const retry = await supabaseAdmin
+                .from('tasks')
+                .insert(basicPayload)
+                .select()
+                .single();
+            task = retry.data;
+            taskError = retry.error;
+        }
 
         if (taskError) {
             console.error('[POST /api/tasks] DB error:', taskError);

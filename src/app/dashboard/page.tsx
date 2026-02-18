@@ -168,6 +168,7 @@ export default function UserDashboard() {
                         {/* New Task (Primary Action) */}
                         <button
                             onClick={() => setIsTaskModalOpen(true)}
+                            data-testid="new-task-btn"
                             className="group relative flex flex-col items-start justify-between p-5 h-36 rounded-2xl bg-primary text-white shadow-lg shadow-primary/30 hover:shadow-primary/50 hover:-translate-y-1 transition-all duration-300 active:scale-95"
                         >
                             <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center backdrop-blur-sm group-hover:scale-110 transition-transform">

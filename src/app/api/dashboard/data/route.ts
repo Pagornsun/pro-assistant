@@ -18,7 +18,7 @@ export async function GET(request: NextRequest) {
         // 1. Get Profile
         const { data: profile, error: profileError } = await supabaseAdmin
             .from('profiles')
-            .select('id, tier, display_name')
+            .select('id, tier, preferences')
             .eq('line_user_id', lineUserId)
             .single();
 

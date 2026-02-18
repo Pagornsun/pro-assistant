@@ -4,3 +4,8 @@
 // Used for __tests__/testing-library.js
 // learn more: https://github.com/testing-library/jest-dom
 import '@testing-library/jest-dom'
+
+// Mock environment variables
+process.env.STRIPE_SECRET_KEY = 'sk_test_dummy';
+process.env.NEXT_PUBLIC_SUPABASE_URL = 'https://test.supabase.co';
+process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY = 'test-anon-key';
