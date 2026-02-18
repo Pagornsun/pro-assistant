@@ -13,6 +13,7 @@ export const metadata: Metadata = {
 };
 
 import { LiffProvider } from "@/components/providers/LiffProvider";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
 
 export default function RootLayout({
   children,
@@ -20,14 +21,17 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html lang="th">
       <body
         className={`${manrope.variable} antialiased font-manrope`}
       >
-        <LiffProvider>
-          {children}
-        </LiffProvider>
+        <ErrorBoundary>
+          <LiffProvider>
+            {children}
+          </LiffProvider>
+        </ErrorBoundary>
       </body>
     </html>
   );
 }
+

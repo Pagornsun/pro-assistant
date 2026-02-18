@@ -251,11 +251,12 @@ export async function handleLineEvent(event: WebhookEvent) {
             await saveChatMessage(profile.id, 'assistant', replyMsg);
         }
 
-    } catch (error: any) {
-        console.error('Error handling LINE event:', error);
+    } catch (error) {
+        console.error('[handleLineEvent] Unexpected error:', error);
+        // Send a generic message — do NOT expose internal error details to users
         await safeReply(event.replyToken, lineUserId, {
             type: 'text',
-            text: `เกิดข้อผิดพลาด: ${error.message || 'Unknown Error'}`
+            text: 'ขออภัย เกิดข้อผิดพลาดชั่วคราว กรุณาลองใหม่อีกครั้งครับ 🙏'
         });
     }
 

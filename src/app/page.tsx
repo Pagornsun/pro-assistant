@@ -198,12 +198,11 @@ export default function Home() {
             </div>
             <div className="text-2xl font-bold text-primary mb-6">Kinn.</div>
             <div className="flex gap-6 mb-8">
-              <Link href="#" className="text-sm text-gray-500 hover:text-primary transition-colors">Privacy</Link>
-              <Link href="#" className="text-sm text-gray-500 hover:text-primary transition-colors">Terms</Link>
-              <Link href="#" className="text-sm text-gray-500 hover:text-primary transition-colors">Contact</Link>
+              <Link href="/privacy" className="text-sm text-gray-500 hover:text-primary transition-colors">นโยบายความเป็นส่วนตัว</Link>
+              <Link href="/terms" className="text-sm text-gray-500 hover:text-primary transition-colors">ข้อกำหนดการให้บริการ</Link>
             </div>
             <p className="text-xs text-gray-400">
-              © 2024 Kinn Services. All rights reserved.<br />
+              © 2026 Kinn Services. All rights reserved.<br />
               Operating within LINE app.
             </p>
           </div>

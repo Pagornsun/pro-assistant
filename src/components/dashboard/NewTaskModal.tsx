@@ -30,11 +30,13 @@ export function NewTaskModal({ isOpen, onClose }: NewTaskModalProps) {
     const { liff } = useLiff();
     const [selectedCategory, setSelectedCategory] = useState<string>('custom');
     const [isSending, setIsSending] = useState(false);
+    const [sendError, setSendError] = useState<string | null>(null);
 
     if (!isOpen) return null;
 
     const handleNext = async () => {
         setIsSending(true);
+        setSendError(null);
         try {
             if (liff && liff.isInClient()) {
                 const category = CATEGORIES.find(c => c.id === selectedCategory);
@@ -46,17 +48,20 @@ export function NewTaskModal({ isOpen, onClose }: NewTaskModalProps) {
                 ]);
                 liff.closeWindow();
             } else {
-                alert('This feature works best inside the LINE app.');
-                // Fallback for web testing?
+                // Outside LINE — show informational message instead of alert
+                setSendError('ฟีเจอร์นี้ใช้งานได้ภายใน LINE เท่านั้น กรุณาเปิดผ่าน LINE app');
                 console.log(`Simulated sending: New Task: ${selectedCategory}`);
-                onClose();
             }
-        } catch (error) {
-            console.error('Error sending message:', error);
-            alert('Failed to send message. Please try again.');
+        } catch {
+            setSendError('ส่งข้อความไม่สำเร็จ กรุณาลองใหม่อีกครั้ง');
         } finally {
             setIsSending(false);
         }
+    };
+
+    const handleCategoryChange = (id: string) => {
+        setSelectedCategory(id);
+        setSendError(null);
     };
 
     return (
@@ -104,7 +109,7 @@ export function NewTaskModal({ isOpen, onClose }: NewTaskModalProps) {
                                     name="category"
                                     className="peer sr-only"
                                     checked={selectedCategory === cat.id}
-                                    onChange={() => setSelectedCategory(cat.id)}
+                                    onChange={() => handleCategoryChange(cat.id)}
                                 />
 
                                 <div className={`absolute top-4 right-4 h-5 w-5 rounded-full border flex items-center justify-center transition-all
@@ -136,6 +141,9 @@ export function NewTaskModal({ isOpen, onClose }: NewTaskModalProps) {
                         {isSending ? 'Sending...' : 'Next'}
                         {!isSending && <ArrowRight size={20} className="group-hover:translate-x-0.5 transition-transform" />}
                     </button>
+                    {sendError && (
+                        <p className="mt-3 text-sm text-center text-amber-600 dark:text-amber-400">{sendError}</p>
+                    )}
                 </div>
 
                 {/* Safe Area Spacer */}

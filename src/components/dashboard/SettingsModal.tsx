@@ -11,33 +11,37 @@ interface SettingsModalProps {
 export function SettingsModal({ isOpen, onClose, membership }: SettingsModalProps) {
     const { profile } = useLiff();
     const [isLoading, setIsLoading] = useState(false);
+    const [checkoutError, setCheckoutError] = useState<string | null>(null);
 
     if (!isOpen) return null;
 
+    const handleClose = () => {
+        setCheckoutError(null);
+        onClose();
+    };
+
     const handleUpgrade = async () => {
         setIsLoading(true);
+        setCheckoutError(null);
         try {
-            // Call our API to create a Checkout Session
             const response = await fetch('/api/checkout', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     userId: profile?.userId,
-                    priceId: process.env.NEXT_PUBLIC_STRIPE_PRICE_ID // We need this env var
+                    priceId: process.env.NEXT_PUBLIC_STRIPE_PRICE_ID
                 }),
             });
 
             const data = await response.json();
 
             if (data.url) {
-                // Redirect to Stripe
                 window.location.href = data.url;
             } else {
-                alert('Failed to start checkout: ' + (data.error || 'Unknown error'));
+                setCheckoutError(data.error || 'ไม่สามารถเริ่มการชำระเงินได้ กรุณาลองใหม่');
             }
-        } catch (error) {
-            console.error('Checkout Error:', error);
-            alert('Something went wrong. Please try again.');
+        } catch {
+            setCheckoutError('เกิดข้อผิดพลาด กรุณาลองใหม่อีกครั้ง');
         } finally {
             setIsLoading(false);
         }
@@ -53,7 +57,7 @@ export function SettingsModal({ isOpen, onClose, membership }: SettingsModalProp
                         <SettingsIcon /> Settings
                     </h3>
                     <button
-                        onClick={onClose}
+                        onClick={handleClose}
                         className="p-2 rounded-full hover:bg-slate-100 dark:hover:bg-zinc-800 transition-colors text-slate-500"
                     >
                         <X size={20} />
@@ -107,6 +111,9 @@ export function SettingsModal({ isOpen, onClose, membership }: SettingsModalProp
                                     </>
                                 )}
                             </button>
+                            {checkoutError && (
+                                <p className="mt-3 text-sm text-red-300 text-center">{checkoutError}</p>
+                            )}
                         </div>
                     ) : (
                         <div className="bg-emerald-600 rounded-xl p-6 text-white text-center shadow-lg">

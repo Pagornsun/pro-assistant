@@ -1,12 +1,17 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase';
+import { apiSuccess, errors } from '@/lib/api-response';
+import { rateLimit } from '@/lib/rate-limit';
 
 export async function GET(request: NextRequest) {
+    const limited = rateLimit(request);
+    if (limited) return limited;
+
     const searchParams = request.nextUrl.searchParams;
     const lineUserId = searchParams.get('lineUserId');
 
     if (!lineUserId) {
-        return NextResponse.json({ error: 'Missing lineUserId' }, { status: 400 });
+        return errors.unauthorized();
     }
 
     try {
@@ -18,13 +23,8 @@ export async function GET(request: NextRequest) {
             .single();
 
         if (profileError || !profile) {
-            // If profile doesn't exist, return empty/default instead of error to avoid crashing UI
-            return NextResponse.json({
-                profile: null,
-                tasks: [],
-                membership: 'free',
-                message: 'Profile not found'
-            });
+            // Return empty/default instead of error to avoid crashing UI on first login
+            return apiSuccess({ profile: null, tasks: [], membership: 'free' });
         }
 
         // 2. Get Tasks
@@ -36,18 +36,18 @@ export async function GET(request: NextRequest) {
             .limit(10);
 
         if (taskError) {
-            console.error('Task Fetch Error:', taskError);
-            return NextResponse.json({ error: 'Failed to fetch tasks' }, { status: 500 });
+            console.error('[GET /api/dashboard/data] Task fetch error:', taskError);
+            return errors.internal();
         }
 
-        return NextResponse.json({
+        return apiSuccess({
             profile,
             tasks: tasks || [],
-            membership: profile.tier || 'free'
+            membership: profile.tier || 'free',
         });
 
-    } catch (error: any) {
-        console.error('Dashboard API Error:', error);
-        return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
+    } catch (error) {
+        console.error('[GET /api/dashboard/data] Unexpected error:', error);
+        return errors.internal();
     }
 }

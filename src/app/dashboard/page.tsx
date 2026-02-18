@@ -20,12 +20,14 @@ import Link from 'next/link';
 
 import { NewTaskModal } from '@/components/dashboard/NewTaskModal';
 import { SettingsModal } from '@/components/dashboard/SettingsModal';
+import { FullPageLoader, EmptyState, ErrorState } from '@/components/ui/States';
 
 export default function UserDashboard() {
     const { profile, isLoggedIn, error } = useLiff();
     const [tasks, setTasks] = useState<any[]>([]);
     const [membership, setMembership] = useState<string>('free');
     const [loading, setLoading] = useState(true);
+    const [fetchError, setFetchError] = useState<string | null>(null);
     const [isTaskModalOpen, setIsTaskModalOpen] = useState(false);
     const [isSettingsOpen, setIsSettingsOpen] = useState(false);
     const [paymentStatus, setPaymentStatus] = useState<string | null>(null);
@@ -60,13 +62,16 @@ export default function UserDashboard() {
     async function fetchUserData(lineUserId: string) {
         try {
             setLoading(true);
+            setFetchError(null);
 
-            // Call our new Server-Side API to bypass RLS
             const res = await fetch(`/api/dashboard/data?lineUserId=${lineUserId}`);
 
-            if (!res.ok) throw new Error('Failed to fetch data');
+            if (!res.ok) throw new Error(`HTTP ${res.status}`);
 
-            const data = await res.json();
+            const json = await res.json();
+            // Handle both apiSuccess wrapper ({ data: { profile, tasks, membership } })
+            // and legacy direct format ({ profile, tasks, membership })
+            const data = json.data ?? json;
 
             if (data.profile) {
                 setMembership(data.membership);
@@ -75,7 +80,8 @@ export default function UserDashboard() {
                 }
             }
         } catch (err) {
-            console.error('Fetch Data Error:', err);
+            console.error('[Dashboard] Fetch error:', err);
+            setFetchError('ไม่สามารถโหลดข้อมูลได้ กรุณาลองใหม่อีกครั้ง');
         } finally {
             setLoading(false);
         }
@@ -85,7 +91,7 @@ export default function UserDashboard() {
     const activeTaskCount = tasks.filter(t => t.status === 'pending').length;
 
     if (error) return <div className="p-10 text-center text-red-500">Error: {error}</div>;
-    if (!isLoggedIn && loading) return <div className="min-h-screen flex items-center justify-center bg-gray-50"><div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full"></div></div>;
+    if (!isLoggedIn && loading) return <FullPageLoader />;
 
     return (
         <div className="min-h-screen flex justify-center bg-background-light dark:bg-zinc-950">
@@ -187,8 +193,16 @@ export default function UserDashboard() {
                         <div className="flex flex-col gap-3">
                             {loading ? (
                                 [1, 2, 3].map(i => <div key={i} className="h-16 bg-gray-100 dark:bg-zinc-800 rounded-xl animate-pulse" />)
+                            ) : fetchError ? (
+                                <ErrorState
+                                    message={fetchError}
+                                    onRetry={() => profile?.userId && fetchUserData(profile.userId)}
+                                />
                             ) : tasks.length === 0 ? (
-                                <div className="text-center py-8 text-slate-400">No tasks yet.</div>
+                                <EmptyState
+                                    title="ยังไม่มีงาน"
+                                    description="กดปุ่ม New Task เพื่อสร้างงานใหม่ หรือส่งข้อความหา Kinn ใน LINE"
+                                />
                             ) : (
                                 tasks.map(task => (
                                     <div key={task.id} className="flex items-center p-4 bg-white dark:bg-zinc-800 rounded-xl border border-slate-100 dark:border-zinc-700 shadow-sm active:scale-[0.98] transition-transform cursor-pointer">
