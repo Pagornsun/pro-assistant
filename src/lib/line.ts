@@ -191,7 +191,18 @@ export async function handleLineEvent(event: WebhookEvent) {
             const history = await getChatHistory(profile.id);
             const analysis = await analyzeTask(userMessage, history);
 
-            if (analysis.isTask) {
+            if (analysis.isBillSplit) {
+                await supabaseAdmin.from('tasks').insert({
+                    user_id: profile.id,
+                    title: `Bill: ${analysis.billDetails?.total} ${analysis.billDetails?.currency}`,
+                    description: `Split with ${analysis.billDetails?.people_count} people.\nPayers: ${analysis.billDetails?.payers?.join(', ') || 'Everyone'}`,
+                    status: 'pending_payment',
+                    line_group_id: groupId,
+                    bill_split_details: analysis.billDetails
+                });
+                await safeReply(event.replyToken, lineUserId, { type: 'text', text: analysis.replyText || 'Bill created.' });
+                await saveChatMessage(profile.id, 'assistant', `Created Bill: ${analysis.replyText}`);
+            } else if (analysis.isTask) {
                 await supabaseAdmin.from('tasks').insert({
                     user_id: profile.id,
                     title: analysis.title,

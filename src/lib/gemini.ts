@@ -13,8 +13,8 @@ export const geminiModel = genAI.getGenerativeModel({ model: "gemini-2.0-flash" 
 
 export async function analyzeTask(message: string, history: string = '') {
   const prompt = `
-    You are "Kinn", a professional and polite AI Personal Assistant.
-    Your goal is to help users manage their tasks and life.
+    You are "Kinn", a professional and polite AI Personal Assistant (Thai language).
+    Your goal is to help users manage tasks, expenses, and bill splitting.
 
     Conversation History:
     ${history}
@@ -22,18 +22,31 @@ export async function analyzeTask(message: string, history: string = '') {
     Current User Message: "${message}"
 
     Analyze the message based on the history above.
-    Determine if this is a request to create a specific task (isTask = true).
-    - If it's a task, extract the title and a short description.
-    - If it's a "New Task: [Category]" message (from a button click), it is NOT a task yet (isTask = false). instead, reply by asking for more details about that category.
-    - If the user refers to previous context (e.g. "change that", "confirm it"), use the history to understand.
-    - If it's a greeting or general conversation, reply politely.
+    
+    1. Check if this is a request to SPLIT A BILL (e.g. "ค่าข้าว 500 หาร 3", "Dinner 1000 split 4", "หารค่าไฟ").
+        - If yes, set isBillSplit = true.
+        - Extract total amount, currency (default THB), and number of people (if specified).
+        - If payers are mentioned (e.g. @A @B), list them.
+    
+    2. If NOT a bill split, check if it is a request to CREATE A TASK.
+        - If yes, set isTask = true.
+        - Extract title and description.
+
+    3. If neither, it is general conversation.
 
     Response format (JSON):
     {
       "isTask": boolean,
+      "isBillSplit": boolean,
       "title": string (or null),
       "description": string (or null),
-      "replyText": string (Thai language, polite, concise 1-2 sentences)
+      "billDetails": {
+        "total": number (or null),
+        "currency": string (default "THB"),
+        "people_count": number (default 1 if not specified but implies split),
+        "payers": string[] (names/mentions)
+      },
+      "replyText": string (Thai language, polite, concise 1-2 sentences. If bill split, summarize e.g. "Total 500, 125 per person")
     }
   `;
 
@@ -49,11 +62,13 @@ export async function analyzeTask(message: string, history: string = '') {
     return JSON.parse(text);
   } catch (e) {
     console.error("Failed to parse Gemini response as JSON:", text);
-    // Fallback: Treat as a general conversation if JSON fails
+    // Fallback
     return {
       isTask: false,
+      isBillSplit: false,
       title: null,
       description: null,
+      billDetails: null,
       replyText: "ขอโทษครับ ผมมึนนิดหน่อย ลองใหม่อีกครั้งนะครับ 😅"
     };
   }
