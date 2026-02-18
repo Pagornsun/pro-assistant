@@ -89,6 +89,7 @@ describe('LINE Integration Logic', () => {
                 limit: jest.fn().mockReturnThis(),
                 single: jest.fn().mockResolvedValue({ data: mockProfile, error: null }),
                 insert: jest.fn().mockResolvedValue({ data: {}, error: null }),
+                update: jest.fn().mockReturnThis(),
             };
             (supabaseAdmin.from as jest.Mock).mockReturnValue(mockQuery);
         });
@@ -99,7 +100,7 @@ describe('LINE Integration Logic', () => {
 
             expect(mockReplyMessage).toHaveBeenCalledWith(
                 mockReplyToken,
-                expect.objectContaining({ altText: 'Welcome to Kinn' })
+                expect.objectContaining({ altText: 'ProAssistant Tutorial (1/4)' })
             );
         });
 
