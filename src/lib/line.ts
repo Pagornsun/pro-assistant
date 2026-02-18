@@ -153,10 +153,24 @@ export async function handleLineEvent(event: WebhookEvent) {
     if (event.type === 'message') {
         const profile = await getOrCreateProfile(lineUserId);
 
+        let groupId: string | undefined = undefined;
+        if (event.source.type === 'group') {
+            groupId = event.source.groupId;
+        } else if (event.source.type === 'room') {
+            groupId = event.source.roomId;
+        }
+        // Reply logic uses replyToken, so it works for groups automatically.
+        // Push logic needs to know if it should push to user or group (but safeReply handles replyToken first).
+
         // 1. Text Message
         if (event.message.type === 'text') {
             const userMessage = event.message.text;
-            await showLoadingAnimation(lineUserId);
+
+            // In groups, only respond if mentioned or specific keywords (optional, for now respond to all)
+            // But to avoid noise, maybe we only respond to known commands or if it looks like a task?
+            // For MVP: Respond to everything but maybe add a filter later.
+
+            await showLoadingAnimation(lineUserId); // Animation shows to user? In groups it might not work well for others.
 
             // Rich Menu Commands
             if (userMessage === 'New Task') {
@@ -171,6 +185,8 @@ export async function handleLineEvent(event: WebhookEvent) {
             }
 
             // AI Text Analysis
+            // Don't save group chat history for now to avoid privacy issues or confusion?
+            // Or save with groupId? For now, only save user history context.
             await saveChatMessage(profile.id, 'user', userMessage);
             const history = await getChatHistory(profile.id);
             const analysis = await analyzeTask(userMessage, history);
@@ -180,11 +196,14 @@ export async function handleLineEvent(event: WebhookEvent) {
                     user_id: profile.id,
                     title: analysis.title,
                     description: analysis.description,
-                    status: 'pending'
+                    status: 'pending',
+                    line_group_id: groupId // Save Group ID
                 });
                 await safeReply(event.replyToken, lineUserId, getTaskFlexMessage(analysis.title, analysis.description));
                 await saveChatMessage(profile.id, 'assistant', `Created Task: ${analysis.title}`);
             } else {
+                // In groups, maybe don't reply to casual chat unless directly addressed?
+                // For MVP, if it's not a task, we reply.
                 await safeReply(event.replyToken, lineUserId, { type: 'text', text: analysis.replyText || 'ครับผม' });
                 await saveChatMessage(profile.id, 'assistant', analysis.replyText || 'ครับผม');
             }
