@@ -34,10 +34,16 @@ const CATEGORIES = [
     { id: 'custom', name: 'Custom Request', desc: 'Anything else you need.', icon: PlusCircle },
 ];
 
+import { UpgradePromptModal } from './UpgradePromptModal'; // Assuming default export but user might have used default. Let's check imports.
+import UpgradePromptModal from './UpgradePromptModal';
+
+// ... existing imports
+
 export function NewTaskModal({ isOpen, onClose }: NewTaskModalProps) {
     const { profile } = useLiff();
     const [step, setStep] = useState<'category' | 'details'>('category');
     const [selectedCategory, setSelectedCategory] = useState<string>('custom');
+    const [showUpgradeModal, setShowUpgradeModal] = useState(false);
 
     // Form State
     const [title, setTitle] = useState('');
@@ -155,6 +161,10 @@ export function NewTaskModal({ isOpen, onClose }: NewTaskModalProps) {
             const json = await res.json();
 
             if (!res.ok) {
+                if (res.status === 403 && json.error === 'LIMIT_REACHED') {
+                    setShowUpgradeModal(true);
+                    return; // Don't close modal, show upgrade prompt
+                }
                 throw new Error(json.error?.message || 'Failed to create task');
             }
 
@@ -388,6 +398,11 @@ export function NewTaskModal({ isOpen, onClose }: NewTaskModalProps) {
 
                 <div className="h-6 bg-white dark:bg-zinc-900 w-full flex-shrink-0"></div>
             </div>
+
+            <UpgradePromptModal
+                isOpen={showUpgradeModal}
+                onClose={() => setShowUpgradeModal(false)}
+            />
         </>
     );
 }

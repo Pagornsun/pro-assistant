@@ -93,12 +93,31 @@ export async function POST(request: NextRequest) {
         // Resolve profile
         const { data: profile, error: profileError } = await supabaseAdmin
             .from('profiles')
-            .select('id')
+            .select('id, tier')
             .eq('line_user_id', lineUserId)
             .single();
 
         if (profileError || !profile) {
             return errors.notFound('โปรไฟล์');
+        }
+
+        // CHECK USAGE LIMIT (Freemium)
+        if (profile.tier === 'free') {
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+
+            const { count, error: countError } = await supabaseAdmin
+                .from('tasks')
+                .select('*', { count: 'exact', head: true })
+                .eq('user_id', profile.id)
+                .gte('created_at', today.toISOString());
+
+            if (!countError && (count || 0) >= 5) {
+                return NextResponse.json({
+                    error: 'LIMIT_REACHED',
+                    message: 'คุณใช้โควต้าสร้างงานครบ 5 งานสำหรับวันนี้แล้ว กรุณาอัปเกรดเป็น Pro เพื่อใช้งานไม่จำกัด',
+                }, { status: 403 });
+            }
         }
 
         const { data: task, error: taskError } = await supabaseAdmin

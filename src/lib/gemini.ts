@@ -58,3 +58,44 @@ export async function analyzeTask(message: string, history: string = '') {
     };
   }
 }
+
+export async function analyzeImage(imageBuffer: Buffer, mimeType: string) {
+  // Use 1.5-flash for vision or 2.0-flash? The prompt was set to 2.0-flash above.
+  // 2.0-flash is better.
+  const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
+
+  const prompt = `
+    Analyze this image. It is likely a Thai Bank Transfer Slip.
+    Extract the following details in JSON format:
+    {
+        "is_slip": boolean,
+        "amount": number,
+        "date": string (ISO8601 or null),
+        "receiver": string (Name or Bank),
+        "sender": string (Name or Bank)
+    }
+    If it is NOT a slip, set is_slip to false.
+    `;
+
+  try {
+    const result = await model.generateContent([
+      prompt,
+      {
+        inlineData: {
+          data: imageBuffer.toString("base64"),
+          mimeType: mimeType
+        }
+      }
+    ]);
+
+    const response = await result.response;
+    const text = response.text();
+
+    // Clean JSON
+    const jsonStr = text.replace(/```json/g, '').replace(/```/g, '').trim();
+    return JSON.parse(jsonStr);
+  } catch (e) {
+    console.error("Gemini Image Analysis Failed:", e);
+    return { is_slip: false };
+  }
+}

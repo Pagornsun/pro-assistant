@@ -23,7 +23,8 @@ import { NewTaskModal } from '@/components/dashboard/NewTaskModal';
 import { SettingsModal } from '@/components/dashboard/SettingsModal';
 import { EditTaskModal } from '@/components/dashboard/EditTaskModal';
 import { DeleteTaskButton } from '@/components/dashboard/DeleteTaskButton';
-import { FullPageLoader, EmptyState, ErrorState } from '@/components/ui/States';
+import { DataStateHandler } from '@/components/shared/DataStateHandler';
+import { FullPageLoader, EmptyState, ErrorState, TaskCardSkeleton } from '@/components/ui/States';
 
 export default function UserDashboard() {
     const { profile, isLoggedIn, error } = useLiff();
@@ -75,24 +76,20 @@ export default function UserDashboard() {
     }, [profile, error]);
 
     async function fetchUserData(lineUserId: string) {
+        if (!lineUserId) return;
         try {
             setLoading(true);
             setFetchError(null);
 
             const res = await fetch(`/api/dashboard/data?lineUserId=${lineUserId}`);
-
             if (!res.ok) throw new Error(`HTTP ${res.status}`);
 
             const json = await res.json();
-            // Handle both apiSuccess wrapper ({ data: { profile, tasks, membership } })
-            // and legacy direct format ({ profile, tasks, membership })
             const data = json.data ?? json;
 
             if (data.profile) {
-                setMembership(data.membership);
-                if (data.tasks) {
-                    setTasks(data.tasks);
-                }
+                setMembership(data.membership || 'free');
+                setTasks(data.tasks || []);
             }
         } catch (err) {
             console.error('[Dashboard] Fetch error:', err);
@@ -105,18 +102,19 @@ export default function UserDashboard() {
     // Derived State
     const activeTaskCount = tasks.filter(t => t.status === 'pending').length;
 
-    if (error) return <div className="p-10 text-center text-red-500">Error: {error}</div>;
-    if (!isLoggedIn && loading) return <FullPageLoader />;
+    // Loading State for initial LIFF load
+    if (!isLoggedIn && loading && !fetchError) return <FullPageLoader />;
 
     return (
         <div className="min-h-screen flex justify-center bg-background-light dark:bg-zinc-950">
             <div className="w-full max-w-md bg-background-light dark:bg-zinc-950 relative flex flex-col min-h-screen shadow-2xl overflow-hidden">
+                {/* Header... */}
+                {/* Greeting... */}
 
-                {/* Header */}
                 <header className="flex items-center justify-between px-6 pt-6 pb-2 sticky top-0 z-10 bg-background-light dark:bg-zinc-950">
                     <h1 className="text-2xl font-extrabold tracking-tight text-slate-900 dark:text-white">Kinn</h1>
                     <button
-                        onClick={() => window.close()} // LIFF close window
+                        onClick={() => window.close()}
                         aria-label="Close"
                         className="w-10 h-10 flex items-center justify-center rounded-full bg-slate-200/50 dark:bg-slate-800/50 hover:bg-slate-300/50 transition-colors text-slate-900 dark:text-white"
                     >
@@ -124,10 +122,7 @@ export default function UserDashboard() {
                     </button>
                 </header>
 
-                {/* Main Content */}
                 <main className="flex-1 px-6 pb-8 overflow-y-auto no-scrollbar">
-
-                    {/* Greeting */}
                     <div className="mt-6 mb-8">
                         <p className="text-sm font-medium text-slate-500 dark:text-slate-400 mb-1">{dateString}</p>
                         <h2 className="text-[28px] leading-[1.2] font-bold text-charcoal dark:text-white">
@@ -136,26 +131,37 @@ export default function UserDashboard() {
                         </h2>
                     </div>
 
-                    {/* Balance/Status Card */}
-                    <div className="bg-charcoal dark:bg-zinc-900 rounded-2xl p-6 text-white shadow-xl shadow-slate-200 dark:shadow-none mb-8 relative overflow-hidden group">
-                        {/* Abstract Decorative gradient */}
-                        <div className="absolute top-0 right-0 w-32 h-32 bg-primary/20 blur-[50px] rounded-full pointer-events-none"></div>
-
-                        <div className="flex gap-6 relative z-10">
-                            <div className="flex-1 flex flex-col gap-1">
-                                <span className="text-slate-400 text-sm font-medium">Active Task</span>
-                                <div className="flex items-baseline gap-1">
-                                    <span className="text-4xl font-bold tracking-tight">{activeTaskCount}</span>
-                                    {activeTaskCount > 0 && <span className="w-2 h-2 bg-primary rounded-full mb-2 animate-pulse"></span>}
+                    <DataStateHandler
+                        isLoading={loading && tasks.length === 0}
+                        error={fetchError}
+                        data={tasks}
+                        onRetry={() => profile?.userId && fetchUserData(profile.userId)}
+                    >
+                        {(data) => (
+                            <>
+                                {/* Balance/Status Card */}
+                                <div className="bg-charcoal dark:bg-zinc-900 rounded-2xl p-6 text-white shadow-xl shadow-slate-200 dark:shadow-none mb-8 relative overflow-hidden group">
+                                    <div className="absolute top-0 right-0 w-32 h-32 bg-primary/20 blur-[50px] rounded-full pointer-events-none"></div>
+                                    <div className="flex gap-6 relative z-10">
+                                        <div className="flex-1 flex flex-col gap-1">
+                                            <span className="text-slate-400 text-sm font-medium">Active Task</span>
+                                            <div className="flex items-baseline gap-1">
+                                                <span className="text-4xl font-bold tracking-tight">{activeTaskCount}</span>
+                                                {activeTaskCount > 0 && <span className="w-2 h-2 bg-primary rounded-full mb-2 animate-pulse"></span>}
+                                            </div>
+                                        </div>
+                                        <div className="w-px bg-white/10 my-1"></div>
+                                        <div className="flex-1 flex flex-col gap-1">
+                                            <span className="text-slate-400 text-sm font-medium">Plan</span>
+                                            <span className="text-2xl font-bold tracking-tight mt-auto capitalize text-primary-300">{membership}</span>
+                                        </div>
+                                    </div>
                                 </div>
-                            </div>
-                            <div className="w-px bg-white/10 my-1"></div>
-                            <div className="flex-1 flex flex-col gap-1">
-                                <span className="text-slate-400 text-sm font-medium">Plan</span>
-                                <span className="text-2xl font-bold tracking-tight mt-auto capitalize text-primary-300">{membership}</span>
-                            </div>
-                        </div>
-                    </div>
+                                {/* ... Rest of Dashboard ... */}
+                            </>
+                        )}
+                    </DataStateHandler>
+
 
                     {/* Quick Task Grid */}
                     <div className="grid grid-cols-2 gap-4 mb-8">
@@ -215,52 +221,59 @@ export default function UserDashboard() {
                             <Link className="text-sm font-semibold text-primary hover:text-primary/80" href="/dashboard/tasks">View All</Link>
                         </div>
 
-                        <div className="flex flex-col gap-3">
-                            {loading ? (
-                                [1, 2, 3].map(i => <div key={i} className="h-16 bg-gray-100 dark:bg-zinc-800 rounded-xl animate-pulse" />)
-                            ) : fetchError ? (
-                                <ErrorState
-                                    message={fetchError}
-                                    onRetry={() => profile?.userId && fetchUserData(profile.userId)}
-                                />
-                            ) : tasks.length === 0 ? (
+                        <DataStateHandler
+                            isLoading={loading}
+                            error={fetchError}
+                            data={tasks}
+                            isEmpty={tasks.length === 0}
+                            loadingSkeleton={
+                                <div className="flex flex-col gap-3">
+                                    {[1, 2, 3].map(i => <TaskCardSkeleton key={i} />)}
+                                </div>
+                            }
+                            emptyState={
                                 <EmptyState
                                     title="ยังไม่มีงาน"
                                     description="กดปุ่ม New Task เพื่อสร้างงานใหม่ หรือส่งข้อความหา Kinn ใน LINE"
                                 />
-                            ) : (
-                                tasks.map(task => (
-                                    <div
-                                        key={task.id}
-                                        className="flex items-center p-4 bg-white dark:bg-zinc-800 rounded-xl border border-slate-100 dark:border-zinc-700 shadow-sm active:scale-[0.98] transition-transform cursor-pointer"
-                                        onClick={() => { setSelectedTask(task); setIsEditModalOpen(true); }}
-                                    >
-                                        <div className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 ${task.status === 'completed' ? 'bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600' : 'bg-blue-50 dark:bg-blue-900/20 text-primary'
-                                            }`}>
-                                            {task.status === 'completed' ? <CheckCircle size={20} /> : <Clock size={20} />}
-                                        </div>
-                                        <div className="ml-4 flex-1 min-w-0">
-                                            <h4 className="text-base font-bold text-slate-900 dark:text-white truncate">{task.title}</h4>
-                                            <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5 line-clamp-1">{task.description}</p>
-                                        </div>
-                                        <div className="flex items-center gap-2 ml-2" onClick={e => e.stopPropagation()}>
-                                            <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold ${task.status === 'done'
-                                                ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-400'
-                                                : 'bg-primary/10 text-primary'
+                            }
+                            onRetry={() => profile?.userId && fetchUserData(profile.userId)}
+                        >
+                            {(data) => (
+                                <div className="flex flex-col gap-3">
+                                    {data.slice(0, 5).map(task => (
+                                        <div
+                                            key={task.id}
+                                            className="flex items-center p-4 bg-white dark:bg-zinc-800 rounded-xl border border-slate-100 dark:border-zinc-700 shadow-sm active:scale-[0.98] transition-transform cursor-pointer"
+                                            onClick={() => { setSelectedTask(task); setIsEditModalOpen(true); }}
+                                        >
+                                            <div className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 ${task.status === 'done' ? 'bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600' : 'bg-blue-50 dark:bg-blue-900/20 text-primary'
                                                 }`}>
-                                                {task.status === 'done' ? 'Done' : task.status === 'processing' ? 'In Progress' : 'Pending'}
-                                            </span>
-                                            <DeleteTaskButton
-                                                taskId={task.id}
-                                                taskTitle={task.title}
-                                                lineUserId={profile?.userId || ''}
-                                                onDeleted={() => handleTaskDeleted(task.id)}
-                                            />
+                                                {task.status === 'done' ? <CheckCircle size={20} /> : <Clock size={20} />}
+                                            </div>
+                                            <div className="ml-4 flex-1 min-w-0">
+                                                <h4 className="text-base font-bold text-slate-900 dark:text-white truncate">{task.title}</h4>
+                                                <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5 line-clamp-1">{task.description}</p>
+                                            </div>
+                                            <div className="flex items-center gap-2 ml-2" onClick={e => e.stopPropagation()}>
+                                                <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold ${task.status === 'done'
+                                                    ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-400'
+                                                    : 'bg-primary/10 text-primary'
+                                                    }`}>
+                                                    {task.status === 'done' ? 'Done' : task.status === 'processing' ? 'In Progress' : 'Pending'}
+                                                </span>
+                                                <DeleteTaskButton
+                                                    taskId={task.id}
+                                                    taskTitle={task.title}
+                                                    lineUserId={profile?.userId || ''}
+                                                    onDeleted={() => handleTaskDeleted(task.id)}
+                                                />
+                                            </div>
                                         </div>
-                                    </div>
-                                ))
+                                    ))}
+                                </div>
                             )}
-                        </div>
+                        </DataStateHandler>
                     </div>
 
                     <div className="h-8"></div> {/* Bottom Spacer */}
