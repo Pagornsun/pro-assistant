@@ -1,0 +1,61 @@
+name: CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  test:
+    name: Lint, Unit & E2E Tests
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install Dependencies
+        run: npm ci
+
+      - name: Run Lint
+        run: npm run lint
+
+      - name: Run Unit & Integration Tests (Jest)
+        run: npm test
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: "https://mock.supabase.co"
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: "mock-key"
+          SUPABASE_SERVICE_ROLE_KEY: "mock-service-key"
+          LINE_CHANNEL_ACCESS_TOKEN: "mock-token"
+          LINE_CHANNEL_SECRET: "mock-secret"
+          GEMINI_API_KEY: "mock-api-key"
+
+      - name: Install Playwright Browsers
+        run: npx playwright install --with-deps
+
+      - name: Run E2E Tests (Playwright)
+        run: npm run test:e2e
+        env:
+          NEXT_PUBLIC_MOCK_LIFF: "true" # Force Mock Auth for CI
+          NEXT_PUBLIC_SUPABASE_URL: "https://mock.supabase.co"
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: "mock-key"
+          # Backend vars needed for build/start even if mocked
+          SUPABASE_SERVICE_ROLE_KEY: "mock-service-key"
+          LINE_CHANNEL_ACCESS_TOKEN: "mock-token"
+          LINE_CHANNEL_SECRET: "mock-secret"
+          GEMINI_API_KEY: "mock-api-key"
+
+      - name: Upload Playwright Report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: playwright-report
+          path: playwright-report/
+          retention-days: 30

@@ -9,6 +9,7 @@ interface Task {
     title: string;
     description?: string;
     status: 'pending' | 'processing' | 'done' | 'cancelled';
+    due_date?: string;
 }
 
 interface EditTaskModalProps {
@@ -30,6 +31,7 @@ export function EditTaskModal({ task, isOpen, onClose, onSaved, lineUserId }: Ed
     const [title, setTitle] = useState('');
     const [description, setDescription] = useState('');
     const [status, setStatus] = useState<Task['status']>('pending');
+    const [dueDate, setDueDate] = useState('');
     const [isSaving, setIsSaving] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [titleError, setTitleError] = useState<string | null>(null);
@@ -40,6 +42,19 @@ export function EditTaskModal({ task, isOpen, onClose, onSaved, lineUserId }: Ed
             setTitle(task.title);
             setDescription(task.description || '');
             setStatus(task.status);
+            // Format format: YYYY-MM-DDTHH:mm
+            if (task.due_date) {
+                const date = new Date(task.due_date);
+                // Adjust to local ISO string for input
+                // Or simply use the ISO string slice if stored as UTC but we want local time input?
+                // Standard Date input works with local time usually?
+                // Actually toISOString() is UTC.
+                // We need 'YYYY-MM-DDThh:mm' in local time.
+                const localIso = new Date(date.getTime() - (date.getTimezoneOffset() * 60000)).toISOString().slice(0, 16);
+                setDueDate(localIso);
+            } else {
+                setDueDate('');
+            }
             setError(null);
             setTitleError(null);
         }
@@ -77,6 +92,7 @@ export function EditTaskModal({ task, isOpen, onClose, onSaved, lineUserId }: Ed
                     title: title.trim(),
                     description: description.trim() || undefined,
                     status,
+                    due_date: dueDate ? new Date(dueDate).toISOString() : null,
                 }),
             });
 
@@ -142,7 +158,6 @@ export function EditTaskModal({ task, isOpen, onClose, onSaved, lineUserId }: Ed
                             data-testid="edit-task-title"
                         />
                         {titleError && <p className="text-xs text-red-500 mt-1">{titleError}</p>}
-                        <p className="text-xs text-slate-400 mt-1 text-right">{title.length}/200</p>
                     </div>
 
                     {/* Description */}
@@ -158,6 +173,19 @@ export function EditTaskModal({ task, isOpen, onClose, onSaved, lineUserId }: Ed
                             placeholder="รายละเอียดเพิ่มเติม (ไม่บังคับ)"
                             className="w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-zinc-700 text-sm bg-slate-50 dark:bg-zinc-800 text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary/50 resize-none transition-all"
                             data-testid="edit-task-description"
+                        />
+                    </div>
+
+                    {/* Due Date */}
+                    <div>
+                        <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
+                            กำหนดส่ง (แจ้งเตือน 15 นาทีก่อนถึง)
+                        </label>
+                        <input
+                            type="datetime-local"
+                            value={dueDate}
+                            onChange={(e) => setDueDate(e.target.value)}
+                            className="w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-zinc-700 text-sm bg-slate-50 dark:bg-zinc-800 text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all [color-scheme:light] dark:[color-scheme:dark]"
                         />
                     </div>
 

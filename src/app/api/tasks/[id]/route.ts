@@ -3,6 +3,7 @@ import { ZodError } from 'zod';
 import { supabaseAdmin } from '@/lib/supabase';
 import { updateTaskSchema } from '@/lib/schemas';
 import { apiSuccess, errors, handleZodError } from '@/lib/api-response';
+import { addDays, addWeeks, addMonths } from 'date-fns'; // Need date-fns or native date logic
 
 // Helper: verify task ownership
 async function getTaskForUser(taskId: string, lineUserId: string) {
@@ -78,6 +79,7 @@ export async function PATCH(
     if (input.description !== undefined) updates.description = input.description;
     if (input.status !== undefined) updates.status = input.status;
     if (input.due_date !== undefined) updates.due_date = input.due_date;
+    if (input.tags !== undefined) updates.tags = input.tags; // ADDED
 
     if (Object.keys(updates).length === 0) {
         return apiSuccess(task); // Nothing to update
@@ -93,6 +95,43 @@ export async function PATCH(
     if (updateError) {
         console.error('[PATCH /api/tasks/:id] DB error:', updateError);
         return errors.internal();
+    }
+
+    // ─────────────────────────────────────────────────────────────
+    // RECURRING TASKS LOGIC
+    // ─────────────────────────────────────────────────────────────
+    // If task is completed and has recurrence config, create the next one
+    if (updates.status === 'done' && updated.recurring_config) {
+        try {
+            const config = updated.recurring_config as any; // { frequency, interval }
+            const currentDueDate = updated.due_date ? new Date(updated.due_date) : new Date();
+            let nextDueDate = new Date(currentDueDate);
+
+            // Calculate next date
+            const interval = config.interval || 1;
+            if (config.frequency === 'daily') {
+                nextDueDate.setDate(nextDueDate.getDate() + interval);
+            } else if (config.frequency === 'weekly') {
+                nextDueDate.setDate(nextDueDate.getDate() + (interval * 7));
+            } else if (config.frequency === 'monthly') {
+                nextDueDate.setMonth(nextDueDate.getMonth() + interval);
+            }
+
+            // Create next task
+            await supabaseAdmin.from('tasks').insert({
+                user_id: updated.user_id,
+                title: updated.title,
+                description: updated.description,
+                status: 'pending',
+                due_date: nextDueDate.toISOString(),
+                recurring_config: config, // Pass config to next task so it keeps recurring
+            });
+
+            console.log(`[Recurring] Created next task for ${updated.id} due ${nextDueDate.toISOString()}`);
+        } catch (err) {
+            console.error('[Recurring] Failed to create next task:', err);
+            // Don't fail the request, just log it. The user still completed the current task.
+        }
     }
 
     return apiSuccess(updated);

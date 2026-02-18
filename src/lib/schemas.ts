@@ -16,6 +16,14 @@ export const createTaskSchema = z.object({
         .optional()
         .transform((v) => v?.trim() || undefined),
     due_date: z.string().datetime({ message: 'รูปแบบวันที่ไม่ถูกต้อง' }).optional().nullable(),
+    recurring_config: z
+        .object({
+            frequency: z.enum(['daily', 'weekly', 'monthly']),
+            interval: z.number().min(1).max(99),
+        })
+        .optional()
+        .nullable(),
+    tags: z.array(z.string()).optional(), // ADDED
 });
 
 export const updateTaskSchema = z.object({
@@ -34,6 +42,14 @@ export const updateTaskSchema = z.object({
         .enum(['pending', 'processing', 'done', 'cancelled'] as const)
         .optional(),
     due_date: z.string().datetime({ message: 'รูปแบบวันที่ไม่ถูกต้อง' }).optional().nullable(),
+    recurring_config: z
+        .object({
+            frequency: z.enum(['daily', 'weekly', 'monthly']),
+            interval: z.number().min(1).max(99),
+        })
+        .optional()
+        .nullable(),
+    tags: z.array(z.string()).optional(), // ADDED
 });
 
 // ─────────────────────────────────────────────
@@ -43,7 +59,7 @@ export const updateTaskSchema = z.object({
 export const updateProfileSchema = z.object({
     preferences: z
         .object({
-            theme: z.enum(['light', 'dark', 'auto']).optional(),
+            theme: z.enum(['light', 'dark', 'system']).optional(),
             language: z.enum(['th', 'en']).optional(),
             notifications: z.boolean().optional(),
         })
@@ -66,4 +82,13 @@ export const checkoutSchema = z.object({
 export type CreateTaskInput = z.infer<typeof createTaskSchema>;
 export type UpdateTaskInput = z.infer<typeof updateTaskSchema>;
 export type UpdateProfileInput = z.infer<typeof updateProfileSchema>;
+
+export const profileSchema = z.object({
+    theme: z.enum(['light', 'dark', 'system']).optional(),
+    language: z.enum(['th', 'en']).optional(),
+    notifications: z.boolean().optional(),
+});
+
+export type ProfileInput = z.infer<typeof profileSchema>;
+
 export type CheckoutInput = z.infer<typeof checkoutSchema>;

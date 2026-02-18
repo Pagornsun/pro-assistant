@@ -78,12 +78,13 @@ export default function AdminLogin() {
 
                 <form onSubmit={handleLogin} className="space-y-6 relative z-10">
                     <div>
-                        <label className="block text-xs font-bold text-text-secondary uppercase tracking-wider mb-2 ml-1">
+                        <label htmlFor="email" className="block text-xs font-bold text-text-secondary uppercase tracking-wider mb-2 ml-1">
                             Email Address
                         </label>
                         <div className="relative">
                             <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-text-secondary" />
                             <input
+                                id="email"
                                 type="email"
                                 required
                                 className={`w-full pl-12 pr-4 py-4 rounded-2xl bg-background-light dark:bg-background-dark border focus:ring-4 focus:ring-primary/10 transition-all outline-none text-sm font-bold dark:text-white ${fieldErrors.email ? 'border-red-400 focus:border-red-400' : 'border-transparent focus:border-primary/50'
@@ -100,12 +101,13 @@ export default function AdminLogin() {
                     </div>
 
                     <div>
-                        <label className="block text-xs font-bold text-text-secondary uppercase tracking-wider mb-2 ml-1">
+                        <label htmlFor="password" className="block text-xs font-bold text-text-secondary uppercase tracking-wider mb-2 ml-1">
                             Password
                         </label>
                         <div className="relative">
                             <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-text-secondary" />
                             <input
+                                id="password"
                                 type="password"
                                 required
                                 className={`w-full pl-12 pr-4 py-4 rounded-2xl bg-background-light dark:bg-background-dark border focus:ring-4 focus:ring-primary/10 transition-all outline-none text-sm font-bold dark:text-white ${fieldErrors.password ? 'border-red-400 focus:border-red-400' : 'border-transparent focus:border-primary/50'

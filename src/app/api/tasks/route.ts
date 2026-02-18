@@ -1,3 +1,4 @@
+
 import { NextRequest } from 'next/server';
 import { ZodError } from 'zod';
 import { supabaseAdmin } from '@/lib/supabase';
@@ -9,7 +10,7 @@ import { rateLimit } from '@/lib/rate-limit';
 export async function GET(request: NextRequest) {
     const limited = rateLimit(request);
     if (limited) return limited;
-    const { searchParams } = request.nextUrl;
+    const { searchParams } = new URL(request.url);
     const lineUserId = searchParams.get('lineUserId');
     const status = searchParams.get('status');
     const search = searchParams.get('search');
@@ -107,6 +108,8 @@ export async function POST(request: NextRequest) {
                 title: input.title,
                 description: input.description ?? null,
                 due_date: input.due_date ?? null,
+                recurring_config: input.recurring_config ?? null, // ADDED
+                tags: input.tags ?? [], // ADDED
                 status: 'pending',
             })
             .select()

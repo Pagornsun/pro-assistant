@@ -2,7 +2,13 @@ import { NextResponse } from 'next/server';
 import { stripe } from '@/lib/stripe';
 import { supabaseAdmin } from '@/lib/supabase';
 
-export async function POST(req: Request) {
+import { rateLimit } from '@/lib/rate-limit';
+import { NextRequest } from 'next/server';
+
+export async function POST(req: NextRequest) {
+    const limited = rateLimit(req);
+    if (limited) return limited;
+
     try {
         const { userId, priceId } = await req.json();
 

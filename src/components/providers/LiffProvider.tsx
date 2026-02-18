@@ -26,6 +26,30 @@ export const LiffProvider = ({ children }: { children: ReactNode }) => {
     const [isLoggedIn, setIsLoggedIn] = useState(false);
 
     useEffect(() => {
+        // MOCK MODE FOR E2E TESTING
+        if (process.env.NEXT_PUBLIC_MOCK_LIFF === 'true') {
+            console.log('⚠️ LIFF MOCK MODE ENABLED ⚠️');
+            setProfile({
+                userId: 'mock-user-id',
+                displayName: 'Test User',
+                pictureUrl: 'https://via.placeholder.com/150',
+                statusMessage: 'Mocking is fun'
+            });
+            setIsLoggedIn(true);
+            setLiffObject({
+                id: 'mock-liff-id',
+                ready: Promise.resolve(),
+                init: () => Promise.resolve(),
+                getProfile: () => Promise.resolve({ userId: 'mock-user-id', displayName: 'Test User' }),
+                isLoggedIn: () => true,
+                getDecodedIDToken: () => ({ email: 'test@example.com' }),
+                closeWindow: () => { },
+                logout: () => { },
+                login: () => { },
+            } as any);
+            return;
+        }
+
         // Fallback to hardcoded ID if env is missing or malformed (e.g. newlines)
         const LIFF_ID = (process.env.NEXT_PUBLIC_LIFF_ID || '2009152458-0jLBmnkp').trim();
 
