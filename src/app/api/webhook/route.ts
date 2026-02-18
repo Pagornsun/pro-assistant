@@ -1,6 +1,7 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { handleLineEvent } from '@/lib/line';
 import { supabaseAdmin } from '@/lib/supabase';
+import { rateLimit } from '@/lib/rate-limit';
 
 // Helper to check if event was already processed
 async function isDuplicateEvent(eventId: string) {
@@ -23,7 +24,10 @@ async function isDuplicateEvent(eventId: string) {
     return false;
 }
 
-export async function POST(req: Request) {
+export async function POST(req: NextRequest) {
+    const limited = rateLimit(req);
+    if (limited) return limited;
+
     try {
         const body = await req.json();
         const events = body.events || [];

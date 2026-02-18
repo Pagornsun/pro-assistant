@@ -20,6 +20,8 @@ import Link from 'next/link';
 
 import { NewTaskModal } from '@/components/dashboard/NewTaskModal';
 import { SettingsModal } from '@/components/dashboard/SettingsModal';
+import { EditTaskModal } from '@/components/dashboard/EditTaskModal';
+import { DeleteTaskButton } from '@/components/dashboard/DeleteTaskButton';
 import { FullPageLoader, EmptyState, ErrorState } from '@/components/ui/States';
 
 export default function UserDashboard() {
@@ -31,6 +33,18 @@ export default function UserDashboard() {
     const [isTaskModalOpen, setIsTaskModalOpen] = useState(false);
     const [isSettingsOpen, setIsSettingsOpen] = useState(false);
     const [paymentStatus, setPaymentStatus] = useState<string | null>(null);
+    const [selectedTask, setSelectedTask] = useState<any | null>(null);
+    const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+
+    // Optimistic update: replace task in list immediately after save
+    const handleTaskSaved = (updatedTask: any) => {
+        setTasks(prev => prev.map(t => t.id === updatedTask.id ? updatedTask : t));
+    };
+
+    // Optimistic update: remove task from list immediately after delete
+    const handleTaskDeleted = (taskId: string) => {
+        setTasks(prev => prev.filter(t => t.id !== taskId));
+    };
 
     // Check query params for payment status or actions
     useEffect(() => {
@@ -205,7 +219,11 @@ export default function UserDashboard() {
                                 />
                             ) : (
                                 tasks.map(task => (
-                                    <div key={task.id} className="flex items-center p-4 bg-white dark:bg-zinc-800 rounded-xl border border-slate-100 dark:border-zinc-700 shadow-sm active:scale-[0.98] transition-transform cursor-pointer">
+                                    <div
+                                        key={task.id}
+                                        className="flex items-center p-4 bg-white dark:bg-zinc-800 rounded-xl border border-slate-100 dark:border-zinc-700 shadow-sm active:scale-[0.98] transition-transform cursor-pointer"
+                                        onClick={() => { setSelectedTask(task); setIsEditModalOpen(true); }}
+                                    >
                                         <div className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 ${task.status === 'completed' ? 'bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600' : 'bg-blue-50 dark:bg-blue-900/20 text-primary'
                                             }`}>
                                             {task.status === 'completed' ? <CheckCircle size={20} /> : <Clock size={20} />}
@@ -214,16 +232,19 @@ export default function UserDashboard() {
                                             <h4 className="text-base font-bold text-slate-900 dark:text-white truncate">{task.title}</h4>
                                             <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5 line-clamp-1">{task.description}</p>
                                         </div>
-                                        <div className="flex flex-col items-end gap-1">
-                                            <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold ${task.status === 'completed'
+                                        <div className="flex items-center gap-2 ml-2" onClick={e => e.stopPropagation()}>
+                                            <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold ${task.status === 'done'
                                                 ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-400'
                                                 : 'bg-primary/10 text-primary'
                                                 }`}>
-                                                {task.status === 'completed' ? 'Done' : 'Pending'}
+                                                {task.status === 'done' ? 'Done' : task.status === 'processing' ? 'In Progress' : 'Pending'}
                                             </span>
-                                        </div>
-                                        <div className="ml-2 text-slate-300 dark:text-slate-600">
-                                            <ChevronRight size={20} />
+                                            <DeleteTaskButton
+                                                taskId={task.id}
+                                                taskTitle={task.title}
+                                                lineUserId={profile?.userId || ''}
+                                                onDeleted={() => handleTaskDeleted(task.id)}
+                                            />
                                         </div>
                                     </div>
                                 ))
@@ -245,6 +266,13 @@ export default function UserDashboard() {
             {/* Modals */}
             <NewTaskModal isOpen={isTaskModalOpen} onClose={() => setIsTaskModalOpen(false)} />
             <SettingsModal isOpen={isSettingsOpen} onClose={() => setIsSettingsOpen(false)} membership={membership} />
+            <EditTaskModal
+                task={selectedTask}
+                isOpen={isEditModalOpen}
+                onClose={() => { setIsEditModalOpen(false); setSelectedTask(null); }}
+                onSaved={handleTaskSaved}
+                lineUserId={profile?.userId || ''}
+            />
 
             {/* Payment Toast */}
             {paymentStatus === 'success' && (

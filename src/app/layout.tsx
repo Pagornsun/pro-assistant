@@ -14,6 +14,7 @@ export const metadata: Metadata = {
 
 import { LiffProvider } from "@/components/providers/LiffProvider";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
+import { OfflineBanner } from "@/components/ui/States";
 
 export default function RootLayout({
   children,
@@ -26,6 +27,7 @@ export default function RootLayout({
         className={`${manrope.variable} antialiased font-manrope`}
       >
         <ErrorBoundary>
+          <OfflineBanner />
           <LiffProvider>
             {children}
           </LiffProvider>
