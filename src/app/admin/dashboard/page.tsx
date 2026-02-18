@@ -3,7 +3,6 @@
 import React, { useEffect, useState } from 'react';
 import AdminLayout from '@/components/admin/AdminLayout';
 import { Users, CheckCircle, TrendingUp, Activity } from 'lucide-react';
-import { Line } from 'react-chartjs-2'; // Optional, skipping chart for MVP if lib not installed.
 // We don't have chart.js installed. Just Stats Cards.
 
 interface Stats {

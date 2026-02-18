@@ -34,7 +34,6 @@ const CATEGORIES = [
     { id: 'custom', name: 'Custom Request', desc: 'Anything else you need.', icon: PlusCircle },
 ];
 
-import { UpgradePromptModal } from './UpgradePromptModal'; // Assuming default export but user might have used default. Let's check imports.
 import UpgradePromptModal from './UpgradePromptModal';
 
 // ... existing imports

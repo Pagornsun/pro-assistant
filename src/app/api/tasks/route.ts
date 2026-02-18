@@ -1,5 +1,5 @@
 
-import { NextRequest } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { ZodError } from 'zod';
 import { supabaseAdmin } from '@/lib/supabase';
 import { createTaskSchema } from '@/lib/schemas';
