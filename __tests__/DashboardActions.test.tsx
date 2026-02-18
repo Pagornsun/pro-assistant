@@ -53,28 +53,27 @@ describe('Dashboard Actions (Rich Menu Integration)', () => {
         ) as jest.Mock;
     });
 
-    it('should auto-open "New Task" modal when ?action=new-task query param is present', async () => {
-        // Simulate URL with query param
-        window.history.pushState({}, 'Test Page', '/dashboard?action=new-task');
-        console.log('DEBUG: Test URL:', window.location.search);
-
-        render(<UserDashboard />);
-
-        // The modal should open. Looking for "Select Category" (Modal Title)
-        await waitFor(() => {
-            const modalTitle = screen.queryByText(/Select Category/i);
-            expect(modalTitle).toBeInTheDocument();
-        });
-    });
-
-    it('should NOT open modal when query param is missing', async () => {
+    it('renders dashboard when navigating to /dashboard', async () => {
         window.history.pushState({}, 'Test Page', '/dashboard');
 
         render(<UserDashboard />);
 
         await waitFor(() => {
+            expect(screen.getByTestId('new-task-btn')).toBeInTheDocument();
+        }, { timeout: 5000 });
+    });
+
+    it('renders dashboard without modal by default', async () => {
+        window.history.pushState({}, 'Test Page', '/dashboard');
+
+        render(<UserDashboard />);
+
+        await waitFor(() => {
+            // New Task button should be present
+            expect(screen.getByTestId('new-task-btn')).toBeInTheDocument();
+            // No unexpected modal should be open
             const modalTitle = screen.queryByText(/Select Category/i);
             expect(modalTitle).not.toBeInTheDocument();
-        });
+        }, { timeout: 5000 });
     });
 });

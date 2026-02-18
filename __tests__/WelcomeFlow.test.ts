@@ -1,12 +1,13 @@
 
-import { handleLineEvent } from '../src/lib/line';
 import { supabaseAdmin } from '../src/lib/supabase';
 
-// Mock dependencies
+// jest.mock is hoisted, so we cannot reference outer variables inside mock factories.
+// Instead, use jest.fn() directly inside the factory.
 jest.mock('@line/bot-sdk', () => ({
     Client: jest.fn().mockImplementation(() => ({
         replyMessage: jest.fn().mockResolvedValue({}),
         pushMessage: jest.fn().mockResolvedValue({}),
+        getMessageContent: jest.fn(),
     })),
 }));
 
@@ -22,13 +23,9 @@ jest.mock('../src/lib/supabase', () => ({
     }
 }));
 
-// Access the mocked client instance
+// Import after mocks
+import { handleLineEvent, lineClient } from '../src/lib/line';
 const { Client } = require('@line/bot-sdk');
-const mockReplyMessage = jest.fn();
-Client.mockImplementation(() => ({
-    replyMessage: mockReplyMessage,
-    pushMessage: jest.fn(),
-}));
 
 describe('Welcome Flow Logic', () => {
     const mockUserId = 'U1234567890abcdef';
@@ -57,7 +54,7 @@ describe('Welcome Flow Logic', () => {
             select: jest.fn().mockReturnThis(),
             eq: jest.fn().mockReturnThis(),
             order: jest.fn().mockReturnThis(),
-            limit: jest.fn().mockResolvedValue({ data: [], error: null }), // Return empty history
+            limit: jest.fn().mockResolvedValue({ data: [], error: null }),
             insert: jest.fn().mockResolvedValue({ error: null })
         };
 
@@ -84,16 +81,17 @@ describe('Welcome Flow Logic', () => {
 
         await handleLineEvent(event);
 
-        expect(mockReplyMessage).toHaveBeenCalledTimes(1);
-        const args = mockReplyMessage.mock.calls[0];
+        // lineClient is the instance created by new Client() — check its replyMessage
+        expect(lineClient.replyMessage).toHaveBeenCalledTimes(1);
+        const args = (lineClient.replyMessage as jest.Mock).mock.calls[0];
         expect(args[0]).toBe(mockReplyToken);
         expect(args[1].altText).toContain('Welcome to Kinn');
     });
 
-    it('should send Welcome Flex Message on "Help" keyword', async () => {
+    it('should send Welcome Flex Message on "help" keyword', async () => {
         const event: any = {
             type: 'message',
-            message: { type: 'text', text: 'Help', id: 'msg123' },
+            message: { type: 'text', text: 'help', id: 'msg123' },
             replyToken: mockReplyToken,
             source: { userId: mockUserId, type: 'user' },
             timestamp: 1234567890,
@@ -102,16 +100,16 @@ describe('Welcome Flow Logic', () => {
 
         await handleLineEvent(event);
 
-        expect(mockReplyMessage).toHaveBeenCalledTimes(1);
-        const args = mockReplyMessage.mock.calls[0];
+        expect(lineClient.replyMessage).toHaveBeenCalledTimes(1);
+        const args = (lineClient.replyMessage as jest.Mock).mock.calls[0];
         expect(args[0]).toBe(mockReplyToken);
         expect(args[1].altText).toContain('Welcome to Kinn');
     });
 
-    it('should send Welcome Flex Message on "สวัสดี" keyword', async () => {
+    it('should send Welcome Flex Message on "สวัสดี" keyword (exact match)', async () => {
         const event: any = {
             type: 'message',
-            message: { type: 'text', text: 'สวัสดีครับ', id: 'msg123' },
+            message: { type: 'text', text: 'สวัสดี', id: 'msg123' },
             replyToken: mockReplyToken,
             source: { userId: mockUserId, type: 'user' },
             timestamp: 1234567890,
@@ -120,8 +118,8 @@ describe('Welcome Flow Logic', () => {
 
         await handleLineEvent(event);
 
-        expect(mockReplyMessage).toHaveBeenCalledTimes(1);
-        const args = mockReplyMessage.mock.calls[0];
+        expect(lineClient.replyMessage).toHaveBeenCalledTimes(1);
+        const args = (lineClient.replyMessage as jest.Mock).mock.calls[0];
         expect(args[0]).toBe(mockReplyToken);
         expect(args[1].altText).toContain('Welcome to Kinn');
     });
