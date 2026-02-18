@@ -8,12 +8,21 @@ export const cleanToken = (token: string) => {
     return token.replace(/^(Bearer\s+|LINE_CHANNEL_ACCESS_TOKEN=|"|')+/yi, '').replace(/("|')$/, '').trim();
 };
 
-const config: ClientConfig = {
+const getClientConfig = (): ClientConfig => ({
     channelAccessToken: cleanToken(process.env.LINE_CHANNEL_ACCESS_TOKEN || ''),
     channelSecret: process.env.LINE_CHANNEL_SECRET || '',
-};
+});
 
-export const lineClient = new Client(config);
+// Lazy initialization for the client to avoid build-time errors
+export const lineClient = new Proxy({} as Client, {
+    get: (_target, prop) => {
+        const client = new Client(getClientConfig());
+        return (client as any)[prop];
+    }
+});
+
+// We still need the config for other functions, but we access it lazily there too
+const getConfig = () => getClientConfig();
 
 // Helper to safely reply
 async function safeReply(replyToken: string, userId: string, message: any) {
@@ -36,7 +45,7 @@ async function showLoadingAnimation(chatId: string) {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
-                'Authorization': `Bearer ${config.channelAccessToken}`,
+                'Authorization': `Bearer ${getConfig().channelAccessToken}`,
             },
             body: JSON.stringify({ chatId, loadingSeconds: 20 }), // Longer for image
         });
@@ -69,10 +78,11 @@ async function saveChatMessage(userId: string, role: 'user' | 'assistant', messa
 
 // Legacy imports
 import { getWelcomeFlexMessage } from './flex-welcome';
+import { getOnboardingFlexMessage } from './flex-onboarding';
 
 // Helper: Get or Create Profile
 export async function getOrCreateProfile(lineUserId: string) {
-    let { data: profile } = await supabaseAdmin.from('profiles').select('id').eq('line_user_id', lineUserId).single();
+    let { data: profile } = await supabaseAdmin.from('profiles').select('id, tutorial_step').eq('line_user_id', lineUserId).single();
     if (profile) return profile;
 
     // Create Auth User & Profile
@@ -95,11 +105,11 @@ export async function getOrCreateProfile(lineUserId: string) {
     const { data: newProfile, error } = await supabaseAdmin
         .from('profiles')
         .insert({ id: userId, line_user_id: lineUserId, tier: 'free' })
-        .select('id')
+        .select('id, tutorial_step')
         .single();
 
     if (error && error.code === '23505') {
-        const { data: existing } = await supabaseAdmin.from('profiles').select('id').eq('line_user_id', lineUserId).single();
+        const { data: existing } = await supabaseAdmin.from('profiles').select('id, tutorial_step').eq('line_user_id', lineUserId).single();
         if (!existing) throw new Error('Profile Concurrent Creation Failed');
         return existing;
     }
@@ -128,7 +138,14 @@ export async function handleLineEvent(event: WebhookEvent) {
     if (event.type === 'follow') {
         await showLoadingAnimation(lineUserId);
         const profile = await getOrCreateProfile(lineUserId);
-        await safeReply(event.replyToken, lineUserId, getWelcomeFlexMessage());
+
+        // Check if user has already assigned a tutorial step (optional, but good for re-following)
+        if (!profile.tutorial_step || profile.tutorial_step === 0) {
+            await supabaseAdmin.from('profiles').update({ tutorial_step: 1 }).eq('id', profile.id);
+            await safeReply(event.replyToken, lineUserId, getOnboardingFlexMessage(1));
+        } else {
+            await safeReply(event.replyToken, lineUserId, getWelcomeFlexMessage());
+        }
         return { userId: lineUserId, type: 'follow' };
     }
 
@@ -208,6 +225,33 @@ export async function handleLineEvent(event: WebhookEvent) {
             } catch (e: any) {
                 console.error('Image Processing Error:', e);
                 await safeReply(event.replyToken, lineUserId, { type: 'text', text: 'ขออภัย เกิดข้อผิดพลาดในการอ่านรูปครับ' });
+            }
+        }
+    }
+
+    // Handle Postback (Tutorial Navigation)
+    if (event.type === 'postback') {
+        const data = new URLSearchParams(event.postback.data);
+        const action = data.get('action');
+
+        if (action?.startsWith('tutorial_')) {
+            const profile = await getOrCreateProfile(lineUserId);
+
+            if (action === 'tutorial_skip' || action === 'tutorial_finish') {
+                await supabaseAdmin.from('profiles').update({ tutorial_step: 99 }).eq('id', profile.id);
+                await safeReply(event.replyToken, lineUserId, { type: 'text', text: 'ยินดีด้วยครับ! คุณพร้อมใช้งาน ProAssistant แล้ว \n\nลองพิมพ์ "ช่วยสรุปงานวันนี้ให้หน่อย" หรือส่งรูปสลิปมาได้เลยครับ' });
+            }
+            else if (action === 'tutorial_next_1') {
+                await supabaseAdmin.from('profiles').update({ tutorial_step: 2 }).eq('id', profile.id);
+                await safeReply(event.replyToken, lineUserId, getOnboardingFlexMessage(2));
+            }
+            else if (action === 'tutorial_next_2') {
+                await supabaseAdmin.from('profiles').update({ tutorial_step: 3 }).eq('id', profile.id);
+                await safeReply(event.replyToken, lineUserId, getOnboardingFlexMessage(3));
+            }
+            else if (action === 'tutorial_next_3') {
+                await supabaseAdmin.from('profiles').update({ tutorial_step: 4 }).eq('id', profile.id);
+                await safeReply(event.replyToken, lineUserId, getOnboardingFlexMessage(4));
             }
         }
     }
