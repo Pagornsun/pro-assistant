@@ -81,7 +81,7 @@ async function saveChatMessage(userId: string, role: 'user' | 'assistant', messa
 
 // Helper: Get or Create Profile
 export async function getOrCreateProfile(lineUserId: string) {
-    const { data: profile } = await supabaseAdmin.from('profiles').select('id, tutorial_step').eq('line_user_id', lineUserId).single();
+    const { data: profile } = await supabaseAdmin.from('profiles').select('id, tutorial_step, tier').eq('line_user_id', lineUserId).single();
     if (profile) return profile;
 
     // Create Auth User & Profile
@@ -104,11 +104,11 @@ export async function getOrCreateProfile(lineUserId: string) {
     const { data: newProfile, error } = await supabaseAdmin
         .from('profiles')
         .insert({ id: userId, line_user_id: lineUserId, tier: 'free' })
-        .select('id, tutorial_step')
+        .select('id, tutorial_step, tier')
         .single();
 
     if (error && error.code === '23505') {
-        const { data: existing } = await supabaseAdmin.from('profiles').select('id, tutorial_step').eq('line_user_id', lineUserId).single();
+        const { data: existing } = await supabaseAdmin.from('profiles').select('id, tutorial_step, tier').eq('line_user_id', lineUserId).single();
         if (!existing) throw new Error('Profile Concurrent Creation Failed');
         return existing;
     }
