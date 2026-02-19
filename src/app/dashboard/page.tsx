@@ -108,8 +108,14 @@ export default function UserDashboard() {
 
     // Login Action
     const handleLogin = () => {
-        if (liff) {
+        if (!liff) {
+            alert(`LIFF Init Failed: ${error || 'Unknown Error'}. Check console/network.`);
+            return;
+        }
+        try {
             liff.login();
+        } catch (err) {
+            alert(`Login Error: ${err}`);
         }
     };
 
