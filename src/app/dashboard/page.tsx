@@ -16,6 +16,7 @@ import {
     X,
     ChevronRight,
     Crown,
+    LogIn,
 } from 'lucide-react';
 import Link from 'next/link';
 
@@ -28,7 +29,7 @@ import { FullPageLoader, EmptyState, ErrorState, TaskCardSkeleton } from '@/comp
 import { Task } from '@/lib/types';
 
 export default function UserDashboard() {
-    const { profile, isLoggedIn, error } = useLiff();
+    const { profile, isLoggedIn, error, liff } = useLiff();
     const [tasks, setTasks] = useState<Task[]>([]);
     const [membership, setMembership] = useState<string>('free');
     const [loading, setLoading] = useState(true);
@@ -105,6 +106,13 @@ export default function UserDashboard() {
         }
     }
 
+    // Login Action
+    const handleLogin = () => {
+        if (liff) {
+            liff.login();
+        }
+    };
+
     // Derived State
     const activeTaskCount = tasks.filter(t => t.status === 'pending').length;
 
@@ -131,9 +139,20 @@ export default function UserDashboard() {
                 <main className="flex-1 px-6 pb-8 overflow-y-auto no-scrollbar">
                     <div className="mt-6 mb-8">
                         <p className="text-sm font-medium text-slate-500 dark:text-slate-400 mb-1">{dateString}</p>
-                        <h2 className="text-[28px] leading-[1.2] font-bold text-charcoal dark:text-white">
-                            Good Morning, {profile?.displayName || 'Guest'}
-                        </h2>
+                        <div className="flex items-end justify-between">
+                            <h2 className="text-[28px] leading-[1.2] font-bold text-charcoal dark:text-white">
+                                Good Morning, {profile?.displayName || 'Guest'}
+                            </h2>
+                            {!isLoggedIn && (
+                                <button
+                                    onClick={handleLogin}
+                                    className="flex items-center gap-2 px-3 py-1.5 bg-[#06C755] text-white rounded-lg font-bold text-xs shadow-md hover:bg-[#05b34c] transition-colors mb-1"
+                                >
+                                    <LogIn size={14} />
+                                    Login
+                                </button>
+                            )}
+                        </div>
                     </div>
 
                     <DataStateHandler
