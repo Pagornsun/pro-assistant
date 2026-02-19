@@ -33,7 +33,7 @@ test.describe('Smoke Tests - Core Health', () => {
         await emailInput.fill('invalid-email');
         await emailInput.blur();
         await expect(page.locator('text=รูปแบบอีเมลไม่ถูกต้อง')).toBeVisible();
-        await expect(submitBtn).toBeDisabled();
+        // Removed toBeDisabled check because we now allow clicking for feedback
 
         // Test password length
         await passwordInput.fill('123');
@@ -47,6 +47,10 @@ test.describe('Smoke Tests - Core Health', () => {
     });
 
     test('06 - Full E2E Task Creation flow', async ({ page }) => {
+        // Skip in CI/Mock mode if no real DB is available
+        if (process.env.NEXT_PUBLIC_MOCK_LIFF === 'true') {
+            test.skip(true, 'Skipping real DB task creation in mock mode');
+        }
         await page.goto('/dashboard');
 
         // 1. Open Modal

@@ -37,6 +37,7 @@ export default function UserDashboard() {
     const [paymentStatus, setPaymentStatus] = useState<string | null>(null);
     const [selectedTask, setSelectedTask] = useState<any | null>(null);
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+    const [usage, setUsage] = useState({ count: 0, limit: 5 });
 
     // Optimistic update: replace task in list immediately after save
     const handleTaskSaved = (updatedTask: any) => {
@@ -90,6 +91,10 @@ export default function UserDashboard() {
             if (data.profile) {
                 setMembership(data.membership || 'free');
                 setTasks(data.tasks || []);
+                setUsage({
+                    count: data.usageCount || 0,
+                    limit: data.usageLimit || 5
+                });
             }
         } catch (err) {
             console.error('[Dashboard] Fetch error:', err);
@@ -126,8 +131,7 @@ export default function UserDashboard() {
                     <div className="mt-6 mb-8">
                         <p className="text-sm font-medium text-slate-500 dark:text-slate-400 mb-1">{dateString}</p>
                         <h2 className="text-[28px] leading-[1.2] font-bold text-charcoal dark:text-white">
-                            Good Morning,<br />
-                            {profile?.displayName || 'Guest'}
+                            Good Morning, {profile?.displayName || 'Guest'}
                         </h2>
                     </div>
 
@@ -156,6 +160,30 @@ export default function UserDashboard() {
                                             <span className="text-2xl font-bold tracking-tight mt-auto capitalize text-primary-300">{membership}</span>
                                         </div>
                                     </div>
+
+                                    {/* Progress Bar for Free Users */}
+                                    {membership === 'free' && (
+                                        <div className="mt-5 space-y-2 relative z-10">
+                                            <div className="flex justify-between items-center text-xs font-medium">
+                                                <span className="text-slate-400 uppercase tracking-wider">Usage Quota</span>
+                                                <span className={`${usage.count >= usage.limit ? 'text-amber-400' : 'text-slate-300'}`}>
+                                                    {usage.count} / {usage.limit} tasks today
+                                                </span>
+                                            </div>
+                                            <div className="h-2 w-full bg-white/10 rounded-full overflow-hidden">
+                                                <div
+                                                    className={`h-full transition-all duration-1000 ease-out rounded-full ${usage.count >= usage.limit ? 'bg-amber-500 shadow-[0_0_12px_rgba(245,158,11,0.4)]' : 'bg-primary shadow-[0_0_12px_rgba(59,130,246,0.4)]'
+                                                        }`}
+                                                    style={{ width: `${Math.min((usage.count / usage.limit) * 100, 100)}%` }}
+                                                ></div>
+                                            </div>
+                                            {usage.count >= usage.limit && (
+                                                <p className="text-[10px] text-amber-300/80 italic animate-pulse">
+                                                    Daily limit reached. Upgrade to Pro for unlimited tasks.
+                                                </p>
+                                            )}
+                                        </div>
+                                    )}
                                 </div>
                                 {/* ... Rest of Dashboard ... */}
                             </>

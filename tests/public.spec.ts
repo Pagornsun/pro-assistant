@@ -3,15 +3,14 @@ import { test, expect } from '@playwright/test';
 test.describe('Public Pages', () => {
     test('Privacy Policy should load', async ({ page }) => {
         await page.goto('/privacy');
-        // Expect a title or heading "Privacy Policy"
-        // Adjust selector based on actual implementation (P0-4)
-        await expect(page).toHaveTitle(/Privacy|Policy/i);
+        // Expect a title or heading "Privacy Policy" or "นโยบายความเป็นส่วนตัว"
+        await expect(page).toHaveTitle(/Privacy|Policy|นโยบายความเป็นส่วนตัว/i);
         await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
     });
 
     test('Terms of Service should load', async ({ page }) => {
         await page.goto('/terms');
-        await expect(page).toHaveTitle(/Terms/i);
+        await expect(page).toHaveTitle(/Terms|ข้อกำหนดการให้บริการ/i);
         await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
     });
 

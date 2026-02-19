@@ -114,7 +114,10 @@ export async function getOrCreateProfile(lineUserId: string) {
         return existing;
     }
 
-    if (!newProfile) throw new Error('Profile Insert Failed');
+    if (error || !newProfile) {
+        console.error('[Webhook] Profile Creation Error:', error);
+        throw new Error(`Profile Insert Failed: ${error?.message || 'Unknown error'}`);
+    }
 
     return newProfile;
 }
@@ -141,7 +144,7 @@ export async function handleLineEvent(event: WebhookEvent) {
 
         // Check if user has already assigned a tutorial step (optional, but good for re-following)
         if (!profile.tutorial_step || profile.tutorial_step === 0) {
-            await supabaseAdmin.from('profiles').update({ tutorial_step: 1 }).eq('id', profile.id);
+            await supabaseAdmin.from('profiles').update({ tutorial_step: 1 }).eq('id', profile.id).throwOnError();
             await safeReply(event.replyToken, lineUserId, getOnboardingFlexMessage(1));
         } else {
             await safeReply(event.replyToken, lineUserId, getWelcomeFlexMessage());
@@ -199,7 +202,7 @@ export async function handleLineEvent(event: WebhookEvent) {
                     status: 'pending_payment',
                     line_group_id: groupId,
                     bill_split_details: analysis.billDetails
-                });
+                }).throwOnError();
                 await safeReply(event.replyToken, lineUserId, { type: 'text', text: analysis.replyText || 'Bill created.' });
                 await saveChatMessage(profile.id, 'assistant', `Created Bill: ${analysis.replyText}`);
             } else if (analysis.isTask) {
@@ -209,7 +212,7 @@ export async function handleLineEvent(event: WebhookEvent) {
                     description: analysis.description,
                     status: 'pending',
                     line_group_id: groupId // Save Group ID
-                });
+                }).throwOnError();
                 await safeReply(event.replyToken, lineUserId, getTaskFlexMessage(analysis.title, analysis.description));
                 await saveChatMessage(profile.id, 'assistant', `Created Task: ${analysis.title}`);
             } else {
@@ -239,7 +242,7 @@ export async function handleLineEvent(event: WebhookEvent) {
                         description: desc + '\n(Slip Verified)',
                         status: 'pending', // or 'done' if expense tracking only
                         tags: ['Expense', 'Slip']
-                    });
+                    }).throwOnError();
 
                     await safeReply(event.replyToken, lineUserId, {
                         type: 'text',
@@ -268,19 +271,19 @@ export async function handleLineEvent(event: WebhookEvent) {
             const profile = await getOrCreateProfile(lineUserId);
 
             if (action === 'tutorial_skip' || action === 'tutorial_finish') {
-                await supabaseAdmin.from('profiles').update({ tutorial_step: 99 }).eq('id', profile.id);
+                await supabaseAdmin.from('profiles').update({ tutorial_step: 99 }).eq('id', profile.id).throwOnError();
                 await safeReply(event.replyToken, lineUserId, { type: 'text', text: 'ยินดีด้วยครับ! คุณพร้อมใช้งาน ProAssistant แล้ว \n\nลองพิมพ์ "ช่วยสรุปงานวันนี้ให้หน่อย" หรือส่งรูปสลิปมาได้เลยครับ' });
             }
             else if (action === 'tutorial_next_1') {
-                await supabaseAdmin.from('profiles').update({ tutorial_step: 2 }).eq('id', profile.id);
+                await supabaseAdmin.from('profiles').update({ tutorial_step: 2 }).eq('id', profile.id).throwOnError();
                 await safeReply(event.replyToken, lineUserId, getOnboardingFlexMessage(2));
             }
             else if (action === 'tutorial_next_2') {
-                await supabaseAdmin.from('profiles').update({ tutorial_step: 3 }).eq('id', profile.id);
+                await supabaseAdmin.from('profiles').update({ tutorial_step: 3 }).eq('id', profile.id).throwOnError();
                 await safeReply(event.replyToken, lineUserId, getOnboardingFlexMessage(3));
             }
             else if (action === 'tutorial_next_3') {
-                await supabaseAdmin.from('profiles').update({ tutorial_step: 4 }).eq('id', profile.id);
+                await supabaseAdmin.from('profiles').update({ tutorial_step: 4 }).eq('id', profile.id).throwOnError();
                 await safeReply(event.replyToken, lineUserId, getOnboardingFlexMessage(4));
             }
         }

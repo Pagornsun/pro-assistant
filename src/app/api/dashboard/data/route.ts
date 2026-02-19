@@ -40,10 +40,27 @@ export async function GET(request: NextRequest) {
             return errors.internal();
         }
 
+        // 3. Get Today's Usage Count (for Progress Bar)
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+
+        const { count: usageCount, error: countError } = await supabaseAdmin
+            .from('tasks')
+            .select('*', { count: 'exact', head: true })
+            .eq('user_id', profile.id)
+            .gte('created_at', today.toISOString());
+
+        if (countError) {
+            console.error('[GET /api/dashboard/data] Usage count error:', countError);
+            // Non-critical, continue with null usage
+        }
+
         return apiSuccess({
             profile,
             tasks: tasks || [],
             membership: profile.tier || 'free',
+            usageCount: usageCount || 0,
+            usageLimit: 5, // Hardcoded for MVP, could be dynamic based on tier/config
         });
 
     } catch (error) {

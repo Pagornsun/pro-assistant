@@ -125,7 +125,7 @@ export default function AdminLogin() {
 
                     <button
                         type="submit"
-                        disabled={loading || !isFormValid}
+                        disabled={loading}
                         className="w-full py-4 bg-primary text-white font-bold rounded-2xl hover:bg-primary-dark transition-all flex items-center justify-center gap-2 shadow-xl shadow-primary/20 disabled:opacity-50 text-sm mt-4"
                     >
                         {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : "Authorize Entry"}
