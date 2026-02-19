@@ -33,12 +33,12 @@ export async function GET(req: NextRequest) {
                 const prefs = profile.preferences || {};
                 if (!prefs.briefing_daily_enabled) continue;
 
-                // Time Check: Match within 30 min window (if cron runs every 30m)
-                if (prefs.briefing_daily_time) {
-                    const [pHour, pMin] = prefs.briefing_daily_time.split(':').map(Number);
-                    const diffMins = (currentHour * 60 + currentMin) - (pHour * 60 + pMin);
-                    if (diffMins < 0 || diffMins >= 30) continue;
-                }
+                // Time Check: SKIPPED for Hobby Plan (Runs once at 07:00 BKK)
+                // if (prefs.briefing_daily_time) {
+                //     const [pHour, pMin] = prefs.briefing_daily_time.split(':').map(Number);
+                //     const diffMins = (currentHour * 60 + currentMin) - (pHour * 60 + pMin);
+                //     if (diffMins < 0 || diffMins >= 30) continue;
+                // }
 
                 // Get Today's tasks
                 const today = new Date(bangkokTime);
