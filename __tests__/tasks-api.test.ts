@@ -142,7 +142,11 @@ describe('Tasks API', () => {
             });
 
             (supabaseAdmin.from as jest.Mock).mockReturnValueOnce({
-                count: jest.fn().mockResolvedValue({ count: 0, error: null })
+                select: jest.fn().mockReturnValue({
+                    eq: jest.fn().mockReturnValue({
+                        gte: jest.fn().mockResolvedValue({ count: 0, error: null })
+                    })
+                })
             });
 
             (supabaseAdmin.from as jest.Mock).mockReturnValueOnce({
@@ -155,11 +159,12 @@ describe('Tasks API', () => {
 
             const req = new Request('http://localhost:3000/api/tasks', {
                 method: 'POST',
-                body: JSON.stringify({ lineUserId: 'line-123', title: 'New Task' })
+                headers: { 'x-line-user-id': 'line-123' },
+                body: JSON.stringify({ title: 'New Task' })
             });
 
             const res = await POST(req as unknown as NextRequest);
-            expect(res.status).toBe(200);
+            expect(res.status).toBe(201);
         });
     });
 });

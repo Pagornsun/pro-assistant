@@ -47,30 +47,31 @@ describe('Subscription API', () => {
                 ]
             });
 
-            const req = new Request('http://localhost:3000/api/subscription?lineUserId=line-123');
-            const res = await GET(req as unknown as NextRequest);
+            const req = new NextRequest('http://localhost:3000/api/subscription?lineUserId=line-123');
+            const res = await GET(req);
             const body = await res.json();
 
             expect(res.status).toBe(200);
             expect(body.success).toBe(true);
-            expect(body.subscription.status).toBe('active');
+            expect(body.data.status).toBe('active');
         });
 
         it('should return no subscription for free user', async () => {
             (supabaseAdmin.from as jest.Mock).mockReturnValue({
                 select: jest.fn().mockReturnValue({
                     eq: jest.fn().mockReturnValue({
-                        single: jest.fn().mockResolvedValue({ data: { stripe_customer_id: null }, error: null }),
+                        single: jest.fn().mockResolvedValue({ data: { stripe_customer_id: null, tier: 'free' }, error: null }),
                     }),
                 }),
             });
 
-            const req = new Request('http://localhost:3000/api/subscription?lineUserId=line-123');
-            const res = await GET(req as unknown as NextRequest);
+            const req = new NextRequest('http://localhost:3000/api/subscription?lineUserId=line-123');
+            const res = await GET(req);
             const body = await res.json();
 
             expect(res.status).toBe(200);
-            expect(body.subscription).toBeNull();
+            expect(body.data.tier).toBe('free');
+            expect(body.data.status).toBe('active');
         });
 
         it('should handle stripe search with no results', async () => {
@@ -84,12 +85,12 @@ describe('Subscription API', () => {
 
             (stripe.subscriptions.search as jest.Mock).mockResolvedValue({ data: [] });
 
-            const req = new Request('http://localhost:3000/api/subscription?lineUserId=line-123');
-            const res = await GET(req as unknown as NextRequest);
+            const req = new NextRequest('http://localhost:3000/api/subscription?lineUserId=line-123');
+            const res = await GET(req);
             const body = await res.json();
 
             expect(res.status).toBe(200);
-            expect(body.subscription).toBeNull();
+            expect(body.data.status).toBe('unknown');
         });
     });
 
@@ -107,10 +108,17 @@ describe('Subscription API', () => {
                 data: [{ id: 'sub_123' }]
             });
 
-            const req = new Request('http://localhost:3000/api/subscription?lineUserId=line-123', {
+            (stripe.subscriptions.update as jest.Mock).mockResolvedValue({
+                id: 'sub_123',
+                status: 'active',
+                cancel_at_period_end: true,
+                current_period_end: 1234567890
+            });
+
+            const req = new NextRequest('http://localhost:3000/api/subscription?lineUserId=line-123', {
                 method: 'DELETE'
             });
-            const res = await DELETE(req as unknown as NextRequest);
+            const res = await DELETE(req);
             const body = await res.json();
 
             expect(res.status).toBe(200);
@@ -119,8 +127,8 @@ describe('Subscription API', () => {
         });
 
         it('should return 401 if lineUserId is missing', async () => {
-            const req = new Request('http://localhost:3000/api/subscription', { method: 'DELETE' });
-            const res = await DELETE(req as unknown as NextRequest);
+            const req = new NextRequest('http://localhost:3000/api/subscription', { method: 'DELETE' });
+            const res = await DELETE(req);
             expect(res.status).toBe(401);
         });
     });
