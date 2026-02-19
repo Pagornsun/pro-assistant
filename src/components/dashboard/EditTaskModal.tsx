@@ -151,7 +151,7 @@ export function EditTaskModal({ task, isOpen, onClose, onSaved, lineUserId }: Ed
             />
 
             {/* Modal */}
-            <div className="relative w-full max-w-md bg-white dark:bg-zinc-900 rounded-t-3xl sm:rounded-2xl shadow-2xl p-6 pb-8">
+            <div className="relative w-full max-w-md bg-white dark:bg-zinc-900 rounded-t-3xl sm:rounded-2xl shadow-2xl p-6 pb-8 max-h-[90vh] overflow-y-auto no-scrollbar">
                 {/* Header */}
                 <div className="flex items-center justify-between mb-6">
                     <h2 className="text-lg font-bold text-slate-900 dark:text-white">แก้ไขงาน</h2>

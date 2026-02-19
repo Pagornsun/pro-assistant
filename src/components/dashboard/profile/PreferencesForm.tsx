@@ -80,6 +80,40 @@ export function PreferencesForm({ form }: PreferencesFormProps) {
                         <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-primary/20 dark:peer-focus:ring-primary/30 rounded-full peer dark:bg-slate-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-primary"></div>
                     </label>
                 </div>
+
+                {/* Timezone */}
+                <div className="space-y-3 pt-2">
+                    <label className="text-sm font-medium text-slate-700 dark:text-slate-300 block flex items-center gap-2">
+                        <Globe size={16} /> Timezone
+                    </label>
+                    <select
+                        {...form.register('preferences.timezone')}
+                        className="w-full p-2.5 bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-700 rounded-lg text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none text-slate-900 dark:text-white"
+                    >
+                        <option value="Asia/Bangkok">(GMT+07:00) Bangkok</option>
+                        <option value="Asia/Singapore">(GMT+08:00) Singapore</option>
+                        <option value="Asia/Tokyo">(GMT+09:00) Tokyo</option>
+                        <option value="Europe/London">(GMT+00:00) London</option>
+                        <option value="America/New_York">(GMT-05:00) New York</option>
+                    </select>
+                </div>
+
+                {/* Reminder Lead Time */}
+                <div className="space-y-3 pt-2">
+                    <label className="text-sm font-medium text-slate-700 dark:text-slate-300 block flex items-center gap-2">
+                        <Bell size={16} /> Reminder Lead Time
+                    </label>
+                    <select
+                        {...form.register('preferences.reminder_lead_time', { valueAsNumber: true })}
+                        className="w-full p-2.5 bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-700 rounded-lg text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none text-slate-900 dark:text-white"
+                    >
+                        <option value={5}>5 minutes before</option>
+                        <option value={15}>15 minutes before (Default)</option>
+                        <option value={30}>30 minutes before</option>
+                        <option value={60}>1 hour before</option>
+                        <option value={1440}>1 day before</option>
+                    </select>
+                </div>
             </div>
         </div>
     );

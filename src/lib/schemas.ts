@@ -62,6 +62,8 @@ export const updateProfileSchema = z.object({
             theme: z.enum(['light', 'dark', 'system']).optional(),
             language: z.enum(['th', 'en']).optional(),
             notifications: z.boolean().optional(),
+            timezone: z.string().optional(),
+            reminder_lead_time: z.number().min(0).max(1440).optional(),
         })
         .optional(),
 });
@@ -87,6 +89,8 @@ export const profileSchema = z.object({
     theme: z.enum(['light', 'dark', 'system']).optional(),
     language: z.enum(['th', 'en']).optional(),
     notifications: z.boolean().optional(),
+    timezone: z.string().optional(),
+    reminder_lead_time: z.number().min(0).max(1440).optional(),
 });
 
 export type ProfileInput = z.infer<typeof profileSchema>;

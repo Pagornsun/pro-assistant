@@ -370,12 +370,12 @@ export function NewTaskModal({ isOpen, onClose }: NewTaskModalProps) {
                 </div>
 
                 {/* Footer */}
-                <div className="p-6 bg-white dark:bg-zinc-900 border-t border-gray-50 dark:border-zinc-800 mt-auto">
+                <div className="p-6 pb-10 bg-white dark:bg-zinc-900 border-t border-gray-50 dark:border-zinc-800 mt-auto">
                     {step === 'category' ? (
                         <button
                             onClick={handleNext}
                             data-testid="task-next-btn"
-                            className="w-full bg-primary hover:bg-blue-700 text-white font-bold py-4 rounded-xl shadow-lg shadow-blue-500/30 transition-all active:scale-[0.98] flex items-center justify-center gap-2 group"
+                            className="w-full bg-primary hover:bg-blue-700 text-white font-bold py-4 rounded-2xl shadow-lg shadow-blue-500/30 transition-all active:scale-[0.98] flex items-center justify-center gap-2 group"
                         >
                             Next <ArrowRight size={20} className="group-hover:translate-x-0.5 transition-transform" />
                         </button>
@@ -384,7 +384,7 @@ export function NewTaskModal({ isOpen, onClose }: NewTaskModalProps) {
                             onClick={handleSubmit}
                             disabled={isSending}
                             data-testid="task-submit-btn"
-                            className="w-full bg-primary hover:bg-blue-700 text-white font-bold py-4 rounded-xl shadow-lg shadow-blue-500/30 transition-all active:scale-[0.98] flex items-center justify-center gap-2 group disabled:opacity-70 disabled:cursor-not-allowed"
+                            className="w-full bg-primary hover:bg-blue-700 text-white font-bold py-4 rounded-2xl shadow-lg shadow-blue-500/30 transition-all active:scale-[0.98] flex items-center justify-center gap-2 group disabled:opacity-70 disabled:cursor-not-allowed"
                         >
                             {isSending ? (
                                 <><LoadingSpinner size="sm" className="border-white border-t-transparent" /> Creating...</>
@@ -394,7 +394,7 @@ export function NewTaskModal({ isOpen, onClose }: NewTaskModalProps) {
                         </button>
                     )}
                     {sendError && (
-                        <p className="mt-3 text-sm text-center text-amber-600 dark:text-amber-400">{sendError}</p>
+                        <p className="mt-3 text-sm text-center text-amber-600 dark:text-amber-400 font-medium">{sendError}</p>
                     )}
                 </div>
 

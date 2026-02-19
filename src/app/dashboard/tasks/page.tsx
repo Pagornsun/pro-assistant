@@ -103,7 +103,7 @@ export default function TasksPage() {
                             <div
                                 key={task.id}
                                 className="flex items-center p-4 bg-white dark:bg-zinc-800 rounded-xl border border-slate-100 dark:border-zinc-700 shadow-sm active:scale-[0.99] transition-transform cursor-pointer"
-                                onClick={() => { setSelectedTask(task); setIsEditModalOpen(true); }}
+                                onClick={() => router.push(`/dashboard/tasks/${task.id}`)}
                             >
                                 <div className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 ${task.status === 'done' || task.status === 'completed' ? 'bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600' : 'bg-blue-50 dark:bg-blue-900/20 text-primary'
                                     }`}>
