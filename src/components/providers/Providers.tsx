@@ -4,6 +4,7 @@ import React from 'react';
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { OfflineBanner } from "@/components/ui/States";
 import { LiffProvider } from "@/components/providers/LiffProvider";
+import { LiffRedirectHandler } from "@/components/providers/LiffRedirectHandler";
 import { Toaster } from "react-hot-toast";
 
 export function Providers({ children }: { children: React.ReactNode }) {
@@ -22,6 +23,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
             />
             <OfflineBanner />
             <LiffProvider>
+                <LiffRedirectHandler />
                 {children}
             </LiffProvider>
         </ErrorBoundary>

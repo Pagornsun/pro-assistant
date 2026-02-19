@@ -55,7 +55,8 @@ export async function GET(request: NextRequest) {
         // Redirect based on Environment
         const liffId = process.env.NEXT_PUBLIC_LIFF_ID;
         if (liffId) {
-            return NextResponse.redirect(`https://liff.line.me/${liffId}/dashboard/calendar?success=true`);
+            // Workaround: Use ?path= param to survive LINE's path stripping
+            return NextResponse.redirect(`https://liff.line.me/${liffId}/?path=/dashboard/calendar&success=true`);
         }
 
         return NextResponse.redirect(new URL('/dashboard/calendar?success=true', request.url));
@@ -65,7 +66,7 @@ export async function GET(request: NextRequest) {
         // Try to return to LIFF even on error
         const liffId = process.env.NEXT_PUBLIC_LIFF_ID;
         if (liffId) {
-            return NextResponse.redirect(`https://liff.line.me/${liffId}/dashboard/calendar?error=auth_failed`);
+            return NextResponse.redirect(`https://liff.line.me/${liffId}/?path=/dashboard/calendar&error=auth_failed`);
         }
         return NextResponse.redirect(new URL('/dashboard/calendar?error=auth_failed', request.url));
     }
