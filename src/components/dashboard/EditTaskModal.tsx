@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { X, Check, Repeat } from 'lucide-react';
+import { X, Check, Repeat, Users, UserCircle } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import { LoadingSpinner } from '@/components/ui/States';
 import { Task, TaskStatus } from '@/lib/types';
@@ -27,6 +27,9 @@ export function EditTaskModal({ task, isOpen, onClose, onSaved, lineUserId }: Ed
     const [description, setDescription] = useState('');
     const [status, setStatus] = useState<Task['status']>('pending');
     const [dueDate, setDueDate] = useState('');
+    const [groupId, setGroupId] = useState<string | null>(null);
+    const [assignedTo, setAssignedTo] = useState<string | null>(null);
+    const [groups, setGroups] = useState<any[]>([]);
 
     // Recurring State
     const [isRecurring, setIsRecurring] = useState(false);
@@ -43,21 +46,15 @@ export function EditTaskModal({ task, isOpen, onClose, onSaved, lineUserId }: Ed
             setTitle(task.title);
             setDescription(task.description || '');
             setStatus(task.status);
-            // Format format: YYYY-MM-DDTHH:mm
+
             if (task.due_date) {
                 const date = new Date(task.due_date);
-                // Adjust to local ISO string for input
-                // Or simply use the ISO string slice if stored as UTC but we want local time input?
-                // Standard Date input works with local time usually?
-                // Actually toISOString() is UTC.
-                // We need 'YYYY-MM-DDThh:mm' in local time.
                 const localIso = new Date(date.getTime() - (date.getTimezoneOffset() * 60000)).toISOString().slice(0, 16);
                 setDueDate(localIso);
             } else {
                 setDueDate('');
             }
 
-            // Recurring Logic
             if (task.recurring_config) {
                 const config = task.recurring_config as { frequency: string; interval: number };
                 setIsRecurring(true);
@@ -69,10 +66,22 @@ export function EditTaskModal({ task, isOpen, onClose, onSaved, lineUserId }: Ed
                 setRecurringInterval(1);
             }
 
+            setGroupId(task.group_id || null);
+            setAssignedTo(task.assigned_to || null);
             setError(null);
             setTitleError(null);
         }
     }, [task]);
+
+    // Fetch Groups
+    useEffect(() => {
+        if (isOpen && lineUserId) {
+            fetch(`/api/groups?lineUserId=${lineUserId}`)
+                .then(res => res.json())
+                .then(data => setGroups(data.groups || []))
+                .catch(err => console.error('Groups fetch error:', err));
+        }
+    }, [isOpen, lineUserId]);
 
     if (!isOpen || !task) return null;
 
@@ -113,7 +122,9 @@ export function EditTaskModal({ task, isOpen, onClose, onSaved, lineUserId }: Ed
                     description: description.trim() || undefined,
                     status,
                     due_date: dueDate ? new Date(dueDate).toISOString() : null,
-                    recurring_config
+                    recurring_config,
+                    group_id: groupId,
+                    assigned_to: assignedTo
                 }),
             });
 
@@ -279,6 +290,25 @@ export function EditTaskModal({ task, isOpen, onClose, onSaved, lineUserId }: Ed
                                 <option key={opt.value} value={opt.value}>{opt.label}</option>
                             ))}
                         </select>
+                    </div>
+
+                    {/* Group Assignment */}
+                    <div className="border-t border-slate-100 dark:border-zinc-800 pt-4 space-y-4">
+                        <div>
+                            <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1.5 flex items-center gap-2">
+                                <Users size={16} /> กลุ่มที่แชร์ (Group)
+                            </label>
+                            <select
+                                value={groupId || ''}
+                                onChange={(e) => setGroupId(e.target.value || null)}
+                                className="w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-zinc-700 text-sm bg-slate-50 dark:bg-zinc-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all"
+                            >
+                                <option value="">งานส่วนตัว (No Group)</option>
+                                {groups.map(g => (
+                                    <option key={g.id} value={g.id}>{g.name}</option>
+                                ))}
+                            </select>
+                        </div>
                     </div>
 
                     {/* Error */}

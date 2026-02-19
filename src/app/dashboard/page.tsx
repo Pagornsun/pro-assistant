@@ -17,6 +17,7 @@ import {
     ChevronRight,
     Crown,
     LogIn,
+    Users,
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
@@ -195,6 +196,11 @@ export default function UserDashboard() {
                                                 <span className="text-slate-400 text-sm font-medium">Plan</span>
                                                 <span className="text-2xl font-bold tracking-tight mt-auto capitalize text-primary-300">{membership}</span>
                                             </div>
+                                            <div className="w-px bg-white/10 my-1"></div>
+                                            <div className="flex-1 flex flex-col gap-1">
+                                                <span className="text-slate-400 text-sm font-medium">Level {(profile as any)?.level || 1}</span>
+                                                <span className="text-2xl font-bold tracking-tight mt-auto text-emerald-400">{(profile as any)?.points || 0} pts</span>
+                                            </div>
                                         </div>
 
                                         {/* Progress Bar for Free Users */}
@@ -270,6 +276,14 @@ export default function UserDashboard() {
                             </div>
                             <span className="font-bold text-lg leading-tight text-slate-900 dark:text-white">Upgrade<br />Plan</span>
                         </button>
+
+                        {/* My Groups */}
+                        <Link href="/dashboard/groups" className="group flex flex-col items-start justify-between p-5 h-36 rounded-2xl bg-white dark:bg-zinc-800 border border-slate-100 dark:border-zinc-700 shadow-sm hover:shadow-md hover:-translate-y-1 transition-all duration-300">
+                            <div className="w-10 h-10 rounded-full bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400 flex items-center justify-center group-hover:bg-emerald-600 group-hover:text-white transition-colors">
+                                <Users size={24} />
+                            </div>
+                            <span className="font-bold text-lg leading-tight text-slate-900 dark:text-white">My<br />Groups</span>
+                        </Link>
 
                         {/* Help Center */}
                         <Link href="/dashboard/help" className="group flex flex-col items-start justify-between p-5 h-36 rounded-2xl bg-white dark:bg-zinc-800 border border-slate-100 dark:border-zinc-700 shadow-sm hover:shadow-md hover:-translate-y-1 transition-all duration-300">

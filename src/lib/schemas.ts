@@ -24,6 +24,8 @@ export const createTaskSchema = z.object({
         .optional()
         .nullable(),
     tags: z.array(z.string()).optional(), // ADDED
+    group_id: z.string().uuid().optional().nullable(),
+    assigned_to: z.string().uuid().optional().nullable(),
 });
 
 export const updateTaskSchema = z.object({
@@ -50,6 +52,8 @@ export const updateTaskSchema = z.object({
         .optional()
         .nullable(),
     tags: z.array(z.string()).optional(), // ADDED
+    group_id: z.string().uuid().optional().nullable(),
+    assigned_to: z.string().uuid().optional().nullable(),
 });
 
 // ─────────────────────────────────────────────
@@ -103,6 +107,8 @@ export const profileSchema = z.object({
     briefing_weekly_time: z.string().optional(),
     briefing_monthly_enabled: z.boolean().optional(),
     briefing_monthly_time: z.string().optional(),
+    points: z.number().optional(),
+    level: z.number().optional(),
 });
 
 export type ProfileInput = z.infer<typeof profileSchema>;

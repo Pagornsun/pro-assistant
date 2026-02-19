@@ -40,7 +40,7 @@ export function handleZodError(error: ZodError) {
 
 export const errors = {
     unauthorized: () => apiError('UNAUTHORIZED', 'กรุณาเข้าสู่ระบบ', 401),
-    forbidden: () => apiError('FORBIDDEN', 'คุณไม่มีสิทธิ์เข้าถึงข้อมูลนี้', 403),
+    forbidden: (message = 'คุณไม่มีสิทธิ์เข้าถึงข้อมูลนี้') => apiError('FORBIDDEN', message, 403),
     notFound: (resource = 'ข้อมูล') => apiError('NOT_FOUND', `ไม่พบ${resource}`, 404),
     conflict: (message = 'ข้อมูลซ้ำกัน') => apiError('CONFLICT', message, 409),
     tooManyRequests: () => apiError('RATE_LIMIT', 'คำขอมากเกินไป กรุณารอสักครู่', 429),

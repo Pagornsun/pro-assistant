@@ -14,7 +14,8 @@ import {
     ChevronLeft,
     Calendar,
     Clock,
-    Repeat
+    Repeat,
+    Users
 } from 'lucide-react';
 import { useLiff } from '@/components/providers/LiffProvider';
 import { LoadingSpinner } from '@/components/ui/States';
@@ -58,9 +59,23 @@ export function NewTaskModal({ isOpen, onClose }: NewTaskModalProps) {
     const [tags, setTags] = useState<string[]>([]);
     const [tagInput, setTagInput] = useState('');
 
+    // Group State
+    const [groupId, setGroupId] = useState<string | null>(null);
+    const [groups, setGroups] = useState<any[]>([]);
+
     const [isSending, setIsSending] = useState(false);
     const [sendError, setSendError] = useState<string | null>(null);
     const [titleError, setTitleError] = useState<string | null>(null);
+
+    // Fetch Groups
+    React.useEffect(() => {
+        if (isOpen && profile?.userId) {
+            fetch(`/api/groups?lineUserId=${profile.userId}`)
+                .then(res => res.json())
+                .then(data => setGroups(data.groups || []))
+                .catch(err => console.error('Groups fetch error:', err));
+        }
+    }, [isOpen, profile]);
 
     if (!isOpen) return null;
 
@@ -75,6 +90,7 @@ export function NewTaskModal({ isOpen, onClose }: NewTaskModalProps) {
         setTags([]);
         setTagInput('');
         setSelectedCategory('custom');
+        setGroupId(null);
         setSendError(null);
         setTitleError(null);
     };
@@ -153,7 +169,8 @@ export function NewTaskModal({ isOpen, onClose }: NewTaskModalProps) {
                     due_date: dueDate ? new Date(dueDate).toISOString() : null,
                     category: selectedCategory,
                     recurring_config,
-                    tags
+                    tags,
+                    group_id: groupId
                 }),
             });
 
@@ -364,6 +381,23 @@ export function NewTaskModal({ isOpen, onClose }: NewTaskModalProps) {
                                     className="w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-zinc-700 bg-slate-50 dark:bg-zinc-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary/50 text-sm"
                                 />
                                 <p className="text-xs text-slate-400 mt-1 ml-1">Current tags: {tags.length > 0 ? tags.join(', ') : 'None'}</p>
+                            </div>
+
+                            {/* Group Selection */}
+                            <div className="border-t border-slate-100 dark:border-zinc-800 pt-4">
+                                <label className="text-sm font-bold text-slate-700 dark:text-slate-300 mb-2 block flex items-center gap-2">
+                                    <Users size={16} /> Share with Group
+                                </label>
+                                <select
+                                    value={groupId || ''}
+                                    onChange={(e) => setGroupId(e.target.value || null)}
+                                    className="w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-zinc-700 bg-slate-50 dark:bg-zinc-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary/50 text-sm"
+                                >
+                                    <option value="">Personal (No Group)</option>
+                                    {groups.map(g => (
+                                        <option key={g.id} value={g.id}>{g.name}</option>
+                                    ))}
+                                </select>
                             </div>
                         </div>
                     )}

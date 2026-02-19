@@ -127,6 +127,8 @@ export async function POST(request: NextRequest) {
             due_date: input.due_date ?? null,
             recurring_config: input.recurring_config ?? null,
             tags: input.tags ?? [],
+            group_id: input.group_id ?? null,
+            assigned_to: input.assigned_to ?? null,
             status: 'pending',
         };
 

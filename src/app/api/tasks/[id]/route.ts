@@ -65,7 +65,28 @@ export async function PATCH(req: NextRequest, props: { params: Promise<{ id: str
         return errors.internal();
     }
 
-    // Handle Recurring Logic if completed
+    // 1. Gamification: Award points if marked 'done'
+    if (body.status === 'done') {
+        try {
+            const { data: profile } = await supabaseAdmin
+                .from('profiles')
+                .select('points, level')
+                .eq('id', userId)
+                .single();
+
+            const currentPoints = (profile?.points || 0) + 10;
+            const newLevel = Math.floor(currentPoints / 100) + 1;
+
+            await supabaseAdmin
+                .from('profiles')
+                .update({ points: currentPoints, level: newLevel })
+                .eq('id', userId);
+        } catch (e) {
+            console.error('[Gamification] Failed to award points:', e);
+        }
+    }
+
+    // 2. Handle Recurring Logic if completed
     if (body.status === 'done' && updated.recurring_config) {
         try {
             const config = updated.recurring_config as unknown as { frequency: string; interval?: number };
@@ -88,11 +109,12 @@ export async function PATCH(req: NextRequest, props: { params: Promise<{ id: str
                 due_date: nextDueDate.toISOString(),
                 status: 'pending',
                 recurring_config: config,
-                tags: updated.tags
+                tags: updated.tags,
+                group_id: updated.group_id,
+                assigned_to: updated.assigned_to
             });
         } catch (err) {
             console.error('[PATCH /api/tasks/[id]] Recurring logic error:', err);
-            // Don't fail the request if recurring logic fails, just log it
         }
     }
 
