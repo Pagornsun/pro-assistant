@@ -40,6 +40,29 @@ export function EditTaskModal({ task, isOpen, onClose, onSaved, lineUserId }: Ed
     const [error, setError] = useState<string | null>(null);
     const [titleError, setTitleError] = useState<string | null>(null);
 
+    // Tags State
+    const [tags, setTags] = useState<string[]>([]);
+    const [tagInput, setTagInput] = useState('');
+
+    const handleTagKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            const val = tagInput.trim();
+            if (val && !tags.includes(val)) {
+                if (tags.length >= 5) {
+                    toast.error('Max 5 tags allowed');
+                    return;
+                }
+                setTags([...tags, val]);
+                setTagInput('');
+            }
+        }
+    };
+
+    const removeTag = (tagToRemove: string) => {
+        setTags(tags.filter(tag => tag !== tagToRemove));
+    };
+
     // Pre-fill form when task changes
     useEffect(() => {
         if (task) {
@@ -66,6 +89,7 @@ export function EditTaskModal({ task, isOpen, onClose, onSaved, lineUserId }: Ed
                 setRecurringInterval(1);
             }
 
+            setTags(task.tags || []);
             setGroupId(task.group_id || null);
             setAssignedTo(task.assigned_to || null);
             setError(null);
@@ -123,6 +147,7 @@ export function EditTaskModal({ task, isOpen, onClose, onSaved, lineUserId }: Ed
                     status,
                     due_date: dueDate ? new Date(dueDate).toISOString() : null,
                     recurring_config,
+                    tags,
                     group_id: groupId,
                     assigned_to: assignedTo
                 }),
@@ -273,6 +298,35 @@ export function EditTaskModal({ task, isOpen, onClose, onSaved, lineUserId }: Ed
                                 </div>
                             </div>
                         )}
+                    </div>
+
+                    {/* Tags Section */}
+                    <div className="border-t border-slate-100 dark:border-zinc-800 pt-4">
+                        <label className="text-sm font-bold text-slate-700 dark:text-slate-300 mb-2 block">
+                            Tags <span className="text-xs font-normal text-slate-400">(Optional)</span>
+                        </label>
+                        <div className="flex flex-wrap gap-2 mb-2">
+                            {tags.map(tag => (
+                                <span key={tag} className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 text-xs font-medium">
+                                    #{tag}
+                                    <button
+                                        onClick={() => removeTag(tag)}
+                                        className="hover:text-blue-800 dark:hover:text-blue-200"
+                                    >
+                                        <X size={12} />
+                                    </button>
+                                </span>
+                            ))}
+                        </div>
+                        <input
+                            type="text"
+                            value={tagInput}
+                            onChange={(e) => setTagInput(e.target.value)}
+                            onKeyDown={handleTagKeyDown}
+                            placeholder="Add a tag..."
+                            className="w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-zinc-700 bg-slate-50 dark:bg-zinc-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary/50 text-sm"
+                        />
+                        <p className="text-xs text-slate-400 mt-1 ml-1">Current tags: {tags.length > 0 ? tags.join(', ') : 'None'}</p>
                     </div>
 
                     {/* Status */}

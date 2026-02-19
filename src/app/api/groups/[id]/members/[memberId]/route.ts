@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase';
-import { apiSuccess, errors } from '@/lib/api-response';
+import { apiSuccess, errors, apiError } from '@/lib/api-response';
 
 export async function DELETE(
     req: NextRequest,
@@ -61,12 +61,4 @@ export async function DELETE(
         console.error('[Member Delete API]', err);
         return errors.internal();
     }
-}
-
-// Add helper to import apiError if not exported from lib/api-response
-function apiError(code: string, message: string, status: number) {
-    return NextResponse.json(
-        { success: false, error: { code, message } },
-        { status }
-    );
 }

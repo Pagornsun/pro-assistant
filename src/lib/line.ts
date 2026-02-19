@@ -28,6 +28,10 @@ const getConfig = () => getClientConfig();
 
 // Helper to safely reply
 async function safeReply(replyToken: string, userId: string, message: Message | Message[]) {
+    if (process.env.MOCK_LINE) {
+        console.log(`[Mock Reply] To ${userId}:`, JSON.stringify(message, null, 2));
+        return;
+    }
     try {
         await lineClient.replyMessage(replyToken, message);
     } catch (error: unknown) {
@@ -43,6 +47,7 @@ async function safeReply(replyToken: string, userId: string, message: Message | 
 
 // Helper to show loading animation
 async function showLoadingAnimation(chatId: string) {
+    if (process.env.MOCK_LINE) return;
     try {
         await fetch('https://api.line.me/v2/bot/chat/loading/start', {
             method: 'POST',

@@ -41,9 +41,21 @@ export async function GET(req: NextRequest) {
                     .gte('due_date', startOfWeek.toISOString())
                     .lte('due_date', endOfWeek.toISOString());
 
-                // 2. Fetch Weekly Events (Mock or real)
+                // 2. Fetch Weekly Events
                 let events: any[] = [];
-                // API logic for events...
+                if (profile.google_access_token) {
+                    try {
+                        const calRes = await fetch(`https://www.googleapis.com/calendar/v3/calendars/primary/events?timeMin=${startOfWeek.toISOString()}&timeMax=${endOfWeek.toISOString()}&singleEvents=true`, {
+                            headers: { Authorization: `Bearer ${profile.google_access_token}` }
+                        });
+                        if (calRes.ok) {
+                            const calData = await calRes.json();
+                            events = calData.items || [];
+                        }
+                    } catch (e) {
+                        console.warn('Google Cal access failed');
+                    }
+                }
 
                 if ((tasks && tasks.length > 0) || events.length > 0) {
                     const briefingText = await generatePeriodicSummary(tasks || [], events, 'weekly');

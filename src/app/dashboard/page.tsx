@@ -28,6 +28,7 @@ import { NewTaskModal } from '@/components/dashboard/NewTaskModal';
 import { SettingsModal } from '@/components/dashboard/SettingsModal';
 import { EditTaskModal } from '@/components/dashboard/EditTaskModal';
 import { DeleteTaskButton } from '@/components/dashboard/DeleteTaskButton';
+import { TaskCard } from '@/components/dashboard/TaskCard';
 import { DataStateHandler } from '@/components/shared/DataStateHandler';
 import { FullPageLoader, EmptyState, ErrorState, TaskCardSkeleton, StatCardSkeleton } from '@/components/ui/States';
 import { Task } from '@/lib/types';
@@ -323,34 +324,13 @@ export default function UserDashboard() {
                             {(data) => (
                                 <div className="flex flex-col gap-3">
                                     {data.slice(0, 5).map(task => (
-                                        <div
+                                        <TaskCard
                                             key={task.id}
-                                            className="flex items-center p-4 bg-white dark:bg-zinc-800 rounded-xl border border-slate-100 dark:border-zinc-700 shadow-sm active:scale-[0.98] transition-transform cursor-pointer"
+                                            task={task}
+                                            lineUserId={profile?.userId || ''}
                                             onClick={() => router.push(`/dashboard/tasks/${task.id}`)}
-                                        >
-                                            <div className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 ${task.status === 'done' ? 'bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600' : 'bg-blue-50 dark:bg-blue-900/20 text-primary'
-                                                }`}>
-                                                {task.status === 'done' ? <CheckCircle size={20} /> : <Clock size={20} />}
-                                            </div>
-                                            <div className="ml-4 flex-1 min-w-0">
-                                                <h4 className="text-base font-bold text-slate-900 dark:text-white truncate">{task.title}</h4>
-                                                <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5 line-clamp-1">{task.description}</p>
-                                            </div>
-                                            <div className="flex items-center gap-2 ml-2" onClick={e => e.stopPropagation()}>
-                                                <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold ${task.status === 'done'
-                                                    ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-400'
-                                                    : 'bg-primary/10 text-primary'
-                                                    }`}>
-                                                    {task.status === 'done' ? 'Done' : task.status === 'processing' ? 'In Progress' : 'Pending'}
-                                                </span>
-                                                <DeleteTaskButton
-                                                    taskId={task.id}
-                                                    taskTitle={task.title}
-                                                    lineUserId={profile?.userId || ''}
-                                                    onDeleted={() => handleTaskDeleted(task.id)}
-                                                />
-                                            </div>
-                                        </div>
+                                            onDelete={() => handleTaskDeleted(task.id)}
+                                        />
                                     ))}
                                 </div>
                             )}
