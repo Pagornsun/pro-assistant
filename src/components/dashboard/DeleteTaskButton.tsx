@@ -9,9 +9,10 @@ interface DeleteTaskButtonProps {
     taskTitle: string;
     lineUserId: string;
     onDeleted: (taskId: string) => void;
+    children?: React.ReactNode;
 }
 
-export function DeleteTaskButton({ taskId, taskTitle, lineUserId, onDeleted }: DeleteTaskButtonProps) {
+export function DeleteTaskButton({ taskId, taskTitle, lineUserId, onDeleted, children }: DeleteTaskButtonProps) {
     const [showConfirm, setShowConfirm] = useState(false);
     const [isDeleting, setIsDeleting] = useState(false);
     const [error, setError] = useState<string | null>(null);
@@ -44,14 +45,20 @@ export function DeleteTaskButton({ taskId, taskTitle, lineUserId, onDeleted }: D
     return (
         <>
             {/* Delete trigger button */}
-            <button
-                onClick={(e) => { e.stopPropagation(); setShowConfirm(true); }}
-                className="w-8 h-8 flex items-center justify-center rounded-full text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
-                aria-label={`ลบงาน: ${taskTitle}`}
-                data-testid="delete-task-btn"
-            >
-                <Trash2 size={15} />
-            </button>
+            {children ? (
+                <div onClick={(e) => { e.stopPropagation(); setShowConfirm(true); }}>
+                    {children}
+                </div>
+            ) : (
+                <button
+                    onClick={(e) => { e.stopPropagation(); setShowConfirm(true); }}
+                    className="w-8 h-8 flex items-center justify-center rounded-full text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
+                    aria-label={`ลบงาน: ${taskTitle}`}
+                    data-testid="delete-task-btn"
+                >
+                    <Trash2 size={15} />
+                </button>
+            )}
 
             {/* Confirm Dialog */}
             {showConfirm && (

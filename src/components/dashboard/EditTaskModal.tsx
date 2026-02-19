@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { X, Check } from 'lucide-react';
+import { X, Check, Repeat } from 'lucide-react';
 import { LoadingSpinner } from '@/components/ui/States';
 import { Task, TaskStatus } from '@/lib/types';
 
@@ -26,6 +26,12 @@ export function EditTaskModal({ task, isOpen, onClose, onSaved, lineUserId }: Ed
     const [description, setDescription] = useState('');
     const [status, setStatus] = useState<Task['status']>('pending');
     const [dueDate, setDueDate] = useState('');
+
+    // Recurring State
+    const [isRecurring, setIsRecurring] = useState(false);
+    const [recurringFreq, setRecurringFreq] = useState('weekly');
+    const [recurringInterval, setRecurringInterval] = useState(1);
+
     const [isSaving, setIsSaving] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [titleError, setTitleError] = useState<string | null>(null);
@@ -49,6 +55,19 @@ export function EditTaskModal({ task, isOpen, onClose, onSaved, lineUserId }: Ed
             } else {
                 setDueDate('');
             }
+
+            // Recurring Logic
+            if (task.recurring_config) {
+                const config = task.recurring_config as { frequency: string; interval: number };
+                setIsRecurring(true);
+                setRecurringFreq(config.frequency);
+                setRecurringInterval(config.interval || 1);
+            } else {
+                setIsRecurring(false);
+                setRecurringFreq('weekly');
+                setRecurringInterval(1);
+            }
+
             setError(null);
             setTitleError(null);
         }
@@ -76,6 +95,12 @@ export function EditTaskModal({ task, isOpen, onClose, onSaved, lineUserId }: Ed
         setError(null);
 
         try {
+            // Prepare Recurring Config with validation
+            const recurring_config = isRecurring ? {
+                frequency: recurringFreq,
+                interval: Number(recurringInterval)
+            } : null;
+
             const res = await fetch(`/api/tasks/${task.id}`, {
                 method: 'PATCH',
                 headers: {
@@ -87,6 +112,7 @@ export function EditTaskModal({ task, isOpen, onClose, onSaved, lineUserId }: Ed
                     description: description.trim() || undefined,
                     status,
                     due_date: dueDate ? new Date(dueDate).toISOString() : null,
+                    recurring_config
                 }),
             });
 
@@ -181,6 +207,57 @@ export function EditTaskModal({ task, isOpen, onClose, onSaved, lineUserId }: Ed
                             onChange={(e) => setDueDate(e.target.value)}
                             className="w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-zinc-700 text-sm bg-slate-50 dark:bg-zinc-800 text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all [color-scheme:light] dark:[color-scheme:dark]"
                         />
+                    </div>
+
+                    {/* Recurring Task */}
+                    <div className="border-t border-slate-100 dark:border-zinc-800 pt-4">
+                        <div className="flex items-center justify-between">
+                            <label className="flex items-center gap-2 text-sm font-bold text-slate-700 dark:text-slate-300">
+                                <Repeat size={16} className={isRecurring ? "text-primary" : "text-slate-400"} />
+                                Recurring Task
+                            </label>
+                            <button
+                                type="button"
+                                onClick={() => setIsRecurring(!isRecurring)}
+                                className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${isRecurring ? 'bg-primary' : 'bg-slate-200 dark:bg-zinc-700'}`}
+                            >
+                                <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${isRecurring ? 'translate-x-6' : 'translate-x-1'}`} />
+                            </button>
+                        </div>
+
+                        {isRecurring && (
+                            <div className="grid grid-cols-2 gap-3 mt-3 animate-in slide-in-from-top-2 fade-in duration-200">
+                                <div>
+                                    <label className="text-xs text-slate-500 mb-1 block">Frequency</label>
+                                    <select
+                                        value={recurringFreq}
+                                        onChange={(e) => setRecurringFreq(e.target.value)}
+                                        className="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-zinc-700 bg-slate-50 dark:bg-zinc-800 text-sm text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary/50"
+                                    >
+                                        <option value="daily">Daily</option>
+                                        <option value="weekly">Weekly</option>
+                                        <option value="monthly">Monthly</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label className="text-xs text-slate-500 mb-1 block">Interval</label>
+                                    <div className="flex items-center gap-2">
+                                        <span className="text-xs text-slate-400">Every</span>
+                                        <input
+                                            type="number"
+                                            min="1"
+                                            max="99"
+                                            value={recurringInterval}
+                                            onChange={(e) => setRecurringInterval(Number(e.target.value))}
+                                            className="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-zinc-700 bg-slate-50 dark:bg-zinc-800 text-sm text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary/50 text-center"
+                                        />
+                                        <span className="text-xs text-slate-400">
+                                            {recurringFreq === 'daily' ? 'days' : recurringFreq === 'weekly' ? 'weeks' : 'months'}
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
                     </div>
 
                     {/* Status */}

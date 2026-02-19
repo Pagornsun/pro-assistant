@@ -29,6 +29,16 @@ export default function SubscriptionPage() {
         if (profile?.userId) {
             fetchSubscription(profile.userId);
         }
+
+        // Check for payment cancellation
+        if (typeof window !== 'undefined') {
+            const urlParams = new URLSearchParams(window.location.search);
+            if (urlParams.get('payment') === 'cancelled') {
+                toast.error('การชำระเงินถูกยกเลิก');
+                // Optional: Clean up URL
+                window.history.replaceState(null, '', window.location.pathname);
+            }
+        }
     }, [profile]);
 
     async function fetchSubscription(userId: string) {
@@ -100,8 +110,8 @@ export default function SubscriptionPage() {
                             </h2>
                         </div>
                         <div className={`px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wide ${isActive
-                                ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400'
-                                : 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400'
+                            ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400'
+                            : 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400'
                             }`}>
                             {subData?.status || 'Unknown'}
                         </div>
@@ -155,11 +165,32 @@ export default function SubscriptionPage() {
                                 Upgrade directly from the Dashboard to unlock all features.
                             </p>
                             <button
-                                onClick={() => router.push('/dashboard')} // Or raise a modal event
-                                className="w-full py-3 bg-slate-900 dark:bg-white text-white dark:text-black rounded-xl font-bold shadow-lg shadow-slate-900/20 active:scale-[0.98] transition-all flex items-center justify-center gap-2"
+                                onClick={async () => {
+                                    if (!profile?.userId) return;
+                                    try {
+                                        setLoading(true);
+                                        const res = await fetch('/api/checkout', {
+                                            method: 'POST',
+                                            headers: {
+                                                'Content-Type': 'application/json',
+                                                'x-line-user-id': profile.userId,
+                                            },
+                                            body: JSON.stringify({}), // priceId is handled in backend env
+                                        });
+
+                                        if (!res.ok) throw new Error('Failed to start checkout');
+                                        const { url } = await res.json();
+                                        if (url) window.location.href = url;
+                                    } catch (err) {
+                                        console.error(err);
+                                        toast.error('ไม่สามารถเริ่มการชำระเงินได้');
+                                        setLoading(false);
+                                    }
+                                }}
+                                disabled={loading}
+                                className="w-full py-3 bg-slate-900 dark:bg-white text-white dark:text-black rounded-xl font-bold shadow-lg shadow-slate-900/20 active:scale-[0.98] transition-all flex items-center justify-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed"
                             >
-                                <Crown size={18} />
-                                Upgrade Now
+                                {loading ? <LoadingSpinner size="sm" /> : <><Crown size={18} /> Upgrade Now</>}
                             </button>
                         </div>
                     )}

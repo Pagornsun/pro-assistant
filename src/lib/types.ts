@@ -14,6 +14,7 @@ export interface Task {
     is_reminded_1h?: boolean;
     is_reminded_24h?: boolean;
     tags?: string[];
+    recurring_config?: { frequency: string; interval: number } | null;
 }
 
 export interface UserProfile {
@@ -24,4 +25,6 @@ export interface UserProfile {
     preferences?: Record<string, unknown>;
     google_refresh_token?: string | null;
     google_email?: string | null;
+    created_at?: string;
+    updated_at?: string;
 }

@@ -1,28 +1,37 @@
 import { NextResponse } from 'next/server';
 import { stripe } from '@/lib/stripe';
 import { supabaseAdmin } from '@/lib/supabase';
-
 import { rateLimit } from '@/lib/rate-limit';
 import { NextRequest } from 'next/server';
+import { apiError, errors } from '@/lib/api-response';
 
 export async function POST(req: NextRequest) {
     const limited = rateLimit(req);
     if (limited) return limited;
 
+    // 1. Validate User via Header
+    const lineUserId = req.headers.get('x-line-user-id');
+    if (!lineUserId) return errors.unauthorized();
+
     try {
-        const { userId, priceId } = await req.json();
+        const { data: profile } = await supabaseAdmin
+            .from('profiles')
+            .select('id, email') // Assuming email might be in profile or we fetch from auth
+            .eq('line_user_id', lineUserId)
+            .single();
 
-        if (!userId || !priceId) {
-            return NextResponse.json({ error: 'Missing userId or priceId' }, { status: 400 });
+        if (!profile) return errors.unauthorized();
+
+        const body = await req.json();
+        const priceId = body.priceId || process.env.STRIPE_PRICE_ID_PRO;
+
+        if (!priceId) {
+            return apiError('CONFIG_ERROR', 'Service Plan ID not configured', 500);
         }
-
-        // 1. Get user email (for receipt)
-        const { data: user } = await supabaseAdmin.auth.admin.getUserById(userId);
-        const email = user?.user?.email;
 
         // 2. Create Checkout Session
         const session = await stripe.checkout.sessions.create({
-            payment_method_types: ['card'], // Subscriptions usually require cards
+            payment_method_types: ['card'],
             line_items: [
                 {
                     price: priceId,
@@ -31,11 +40,11 @@ export async function POST(req: NextRequest) {
             ],
             mode: 'subscription',
             success_url: `${process.env.NEXT_PUBLIC_LIFF_URL || 'http://localhost:3000'}/dashboard?payment=success`,
-            cancel_url: `${process.env.NEXT_PUBLIC_LIFF_URL || 'http://localhost:3000'}/dashboard?payment=cancelled`,
-            client_reference_id: userId,
-            customer_email: email,
+            cancel_url: `${process.env.NEXT_PUBLIC_LIFF_URL || 'http://localhost:3000'}/dashboard/subscription?payment=cancelled`,
+            client_reference_id: profile.id,
             metadata: {
-                userId: userId
+                userId: profile.id,
+                lineUserId: lineUserId
             }
         });
 
@@ -43,6 +52,6 @@ export async function POST(req: NextRequest) {
 
     } catch (error) {
         console.error('[POST /api/checkout] Stripe error:', error);
-        return NextResponse.json({ error: 'Checkout failed. Please try again.' }, { status: 500 });
+        return errors.internal('ไม่สามารถเริ่มการชำระเงินได้');
     }
 }

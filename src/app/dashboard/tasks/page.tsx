@@ -7,6 +7,8 @@ import { DataStateHandler } from '@/components/shared/DataStateHandler';
 import { Skeleton, EmptyState } from '@/components/ui/States';
 import { Task } from '@/lib/types';
 import { TaskSearch } from '@/components/dashboard/TaskSearch';
+import { EditTaskModal } from '@/components/dashboard/EditTaskModal';
+import { DeleteTaskButton } from '@/components/dashboard/DeleteTaskButton';
 
 export default function TasksPage() {
     const router = useRouter();
@@ -15,6 +17,17 @@ export default function TasksPage() {
     const [loading, setLoading] = useState(true);
     const [fetchError, setFetchError] = useState<string | null>(null);
     const [searchParams, setSearchParams] = useState({ query: '', status: 'all' });
+    const [selectedTask, setSelectedTask] = useState<Task | null>(null);
+    const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+
+    // Optimistic update
+    const handleTaskSaved = (updatedTask: Task) => {
+        setTasks(prev => prev.map(t => t.id === updatedTask.id ? updatedTask : t));
+    };
+
+    const handleTaskDeleted = (taskId: string) => {
+        setTasks(prev => prev.filter(t => t.id !== taskId));
+    };
 
     useEffect(() => {
         if (profile?.userId) {
@@ -89,7 +102,8 @@ export default function TasksPage() {
                         {data.map(task => (
                             <div
                                 key={task.id}
-                                className="flex items-center p-4 bg-white dark:bg-zinc-800 rounded-xl border border-slate-100 dark:border-zinc-700 shadow-sm active:scale-[0.99] transition-transform"
+                                className="flex items-center p-4 bg-white dark:bg-zinc-800 rounded-xl border border-slate-100 dark:border-zinc-700 shadow-sm active:scale-[0.99] transition-transform cursor-pointer"
+                                onClick={() => { setSelectedTask(task); setIsEditModalOpen(true); }}
                             >
                                 <div className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 ${task.status === 'done' || task.status === 'completed' ? 'bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600' : 'bg-blue-50 dark:bg-blue-900/20 text-primary'
                                     }`}>
@@ -99,17 +113,33 @@ export default function TasksPage() {
                                     <h4 className="text-base font-bold text-slate-900 dark:text-white truncate">{task.title}</h4>
                                     <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5 line-clamp-1">{task.description}</p>
                                 </div>
-                                <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold ml-2 whitespace-nowrap ${task.status === 'done' || task.status === 'completed'
-                                    ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-400'
-                                    : 'bg-primary/10 text-primary'
-                                    }`}>
-                                    {task.status === 'done' || task.status === 'completed' ? 'Done' : task.status === 'processing' ? 'In Progress' : 'Pending'}
-                                </span>
+                                <div className="flex items-center gap-2 ml-2" onClick={e => e.stopPropagation()}>
+                                    <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold whitespace-nowrap ${task.status === 'done' || task.status === 'completed'
+                                        ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-400'
+                                        : 'bg-primary/10 text-primary'
+                                        }`}>
+                                        {task.status === 'done' || task.status === 'completed' ? 'Done' : task.status === 'processing' ? 'In Progress' : 'Pending'}
+                                    </span>
+                                    <DeleteTaskButton
+                                        taskId={task.id}
+                                        taskTitle={task.title}
+                                        lineUserId={profile?.userId || ''}
+                                        onDeleted={() => handleTaskDeleted(task.id)}
+                                    />
+                                </div>
                             </div>
                         ))}
                     </div>
                 )}
             </DataStateHandler>
+
+            <EditTaskModal
+                task={selectedTask}
+                isOpen={isEditModalOpen}
+                onClose={() => { setIsEditModalOpen(false); setSelectedTask(null); }}
+                onSaved={handleTaskSaved}
+                lineUserId={profile?.userId || ''}
+            />
         </div>
     );
 }
