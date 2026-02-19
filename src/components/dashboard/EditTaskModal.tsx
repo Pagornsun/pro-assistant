@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { X, Check, Repeat } from 'lucide-react';
+import { toast } from 'react-hot-toast';
 import { LoadingSpinner } from '@/components/ui/States';
 import { Task, TaskStatus } from '@/lib/types';
 
@@ -119,14 +120,17 @@ export function EditTaskModal({ task, isOpen, onClose, onSaved, lineUserId }: Ed
             const json = await res.json();
 
             if (!res.ok) {
-                setError(json.error?.message || 'บันทึกไม่สำเร็จ กรุณาลองใหม่');
+                // setError(json.error?.message || 'บันทึกไม่สำเร็จ กรุณาลองใหม่');
+                toast.error(json.error?.message || 'บันทึกไม่สำเร็จ');
                 return;
             }
 
             onSaved(json.data);
             onClose();
+            toast.success('บันทึกงานเรียบร้อย');
         } catch {
-            setError('เกิดข้อผิดพลาด กรุณาลองใหม่');
+            // setError('เกิดข้อผิดพลาด กรุณาลองใหม่');
+            toast.error('เกิดข้อผิดพลาดในการเชื่อมต่อ');
         } finally {
             setIsSaving(false);
         }

@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import { Trash2, X, AlertTriangle } from 'lucide-react';
+import { toast } from 'react-hot-toast';
 import { LoadingSpinner } from '@/components/ui/States';
 
 interface DeleteTaskButtonProps {
@@ -19,7 +20,7 @@ export function DeleteTaskButton({ taskId, taskTitle, lineUserId, onDeleted, chi
 
     const handleDelete = async () => {
         setIsDeleting(true);
-        setError(null);
+        // setError(null); // No need for local error state if using toast for critical errors
 
         try {
             const res = await fetch(`/api/tasks/${taskId}`, {
@@ -29,14 +30,17 @@ export function DeleteTaskButton({ taskId, taskTitle, lineUserId, onDeleted, chi
 
             if (!res.ok) {
                 const json = await res.json();
-                setError(json.error?.message || 'ลบไม่สำเร็จ');
+                // setError(json.error?.message || 'ลบไม่สำเร็จ');
+                toast.error(json.error?.message || 'ลบไม่สำเร็จ');
                 return;
             }
 
             onDeleted(taskId);
             setShowConfirm(false);
+            toast.success('ลบงานเรียบร้อยแล้ว');
         } catch {
-            setError('เกิดข้อผิดพลาด กรุณาลองใหม่');
+            // setError('เกิดข้อผิดพลาด กรุณาลองใหม่');
+            toast.error('เกิดข้อผิดพลาด กรุณาลองใหม่');
         } finally {
             setIsDeleting(false);
         }
