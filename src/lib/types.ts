@@ -22,7 +22,20 @@ export interface UserProfile {
     line_user_id: string;
     tier: 'free' | 'pro';
     tutorial_step?: number;
-    preferences?: Record<string, unknown>;
+    preferences?: {
+        theme?: 'light' | 'dark' | 'system';
+        language?: 'th' | 'en';
+        notifications?: boolean;
+        timezone?: string;
+        reminder_lead_time?: number;
+        briefing_daily_enabled?: boolean;
+        briefing_daily_time?: string;
+        briefing_weekly_enabled?: boolean;
+        briefing_weekly_time?: string;
+        briefing_monthly_enabled?: boolean;
+        briefing_monthly_time?: string;
+        [key: string]: any;
+    };
     google_access_token?: string | null;
     google_refresh_token?: string | null;
     google_email?: string | null;

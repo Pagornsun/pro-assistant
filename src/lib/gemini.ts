@@ -146,3 +146,35 @@ export async function generateBriefing(tasks: any[]) {
   }
 }
 
+export async function generatePeriodicSummary(tasks: any[], events: any[], period: 'weekly' | 'monthly') {
+  const taskListText = tasks.map(t => `- ${t.title} (${t.status}, priority: ${t.priority || 'medium'})`).join('\n');
+  const eventListText = events.map(e => `- ${e.summary} (${new Date(e.start.dateTime || e.start.date).toLocaleDateString()})`).join('\n');
+
+  const prompt = `
+    You are "Kinn", a professional AI Personal Assistant (Thai language).
+    Here is the data for a ${period} report for the user:
+    
+    TASKS:
+    ${taskListText || 'No tasks found.'}
+
+    CALENDAR EVENTS:
+    ${eventListText || 'No events found.'}
+
+    Write a ${period === 'weekly' ? 'weekly' : 'monthly'} summary (3-4 sentences).
+    1. Summarize achievements (done tasks).
+    2. Highlight upcoming focus areas.
+    3. Be encouraging and professional.
+    4. Use Thai language.
+  `;
+
+  try {
+    const result = await geminiModel.generateContent(prompt);
+    const response = await result.response;
+    return response.text().trim();
+  } catch (e) {
+    console.error(`Gemini ${period} Summary Failed:`, e);
+    return `สวัสดีครับ นี่คือสรุปงาน${period === 'weekly' ? 'รายสัปดาห์' : 'รายเดือน'}ของคุณครับ สู้ๆ กับงานที่เหลือนนะครับ!`;
+  }
+}
+
+

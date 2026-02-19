@@ -64,6 +64,12 @@ export const updateProfileSchema = z.object({
             notifications: z.boolean().optional(),
             timezone: z.string().optional(),
             reminder_lead_time: z.number().min(0).max(1440).optional(),
+            briefing_daily_enabled: z.boolean().optional(),
+            briefing_daily_time: z.string().optional(), // HH:mm
+            briefing_weekly_enabled: z.boolean().optional(),
+            briefing_weekly_time: z.string().optional(),
+            briefing_monthly_enabled: z.boolean().optional(),
+            briefing_monthly_time: z.string().optional(),
         })
         .optional(),
 });
@@ -91,6 +97,12 @@ export const profileSchema = z.object({
     notifications: z.boolean().optional(),
     timezone: z.string().optional(),
     reminder_lead_time: z.number().min(0).max(1440).optional(),
+    briefing_daily_enabled: z.boolean().optional(),
+    briefing_daily_time: z.string().optional(),
+    briefing_weekly_enabled: z.boolean().optional(),
+    briefing_weekly_time: z.string().optional(),
+    briefing_monthly_enabled: z.boolean().optional(),
+    briefing_monthly_time: z.string().optional(),
 });
 
 export type ProfileInput = z.infer<typeof profileSchema>;

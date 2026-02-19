@@ -98,23 +98,73 @@ export function PreferencesForm({ form }: PreferencesFormProps) {
                     </select>
                 </div>
 
-                {/* Reminder Lead Time */}
-                <div className="space-y-3 pt-2">
-                    <label className="text-sm font-medium text-slate-700 dark:text-slate-300 block flex items-center gap-2">
-                        <Bell size={16} /> Reminder Lead Time
-                    </label>
-                    <select
-                        {...form.register('preferences.reminder_lead_time', { valueAsNumber: true })}
-                        className="w-full p-2.5 bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-700 rounded-lg text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none text-slate-900 dark:text-white"
-                    >
-                        <option value={5}>5 minutes before</option>
-                        <option value={15}>15 minutes before (Default)</option>
-                        <option value={30}>30 minutes before</option>
-                        <option value={60}>1 hour before</option>
-                        <option value={1440}>1 day before</option>
-                    </select>
+                {/* Smart Reports Section */}
+                <div className="space-y-4 pt-4 border-t border-slate-100 dark:border-zinc-700">
+                    <h4 className="text-sm font-bold text-slate-900 dark:text-white uppercase tracking-wider">รายงานอัจฉริยะ</h4>
+
+                    {/* Daily Briefing */}
+                    <div className="flex items-center justify-between">
+                        <div className="flex-1">
+                            <p className="text-sm font-medium text-slate-900 dark:text-white">รายงานประจำวัน (Daily)</p>
+                            <p className="text-xs text-slate-500 dark:text-slate-400">สรุปงานและนัดหมายทุกเช้า</p>
+                        </div>
+                        <div className="flex items-center gap-4">
+                            {form.watch('preferences.briefing_daily_enabled') && (
+                                <input
+                                    type="time"
+                                    {...form.register('preferences.briefing_daily_time')}
+                                    className="p-1 px-2 text-xs bg-slate-50 dark:bg-zinc-900 border border-slate-200 dark:border-zinc-700 rounded outline-none"
+                                />
+                            )}
+                            <label className="relative inline-flex items-center cursor-pointer">
+                                <input
+                                    type="checkbox"
+                                    {...form.register('preferences.briefing_daily_enabled')}
+                                    className="sr-only peer"
+                                />
+                                <div className="w-9 h-5 bg-slate-200 peer-focus:outline-none rounded-full peer dark:bg-slate-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all dark:border-gray-600 peer-checked:bg-primary"></div>
+                            </label>
+                        </div>
+                    </div>
+
+                    {/* Weekly Report */}
+                    <div className="flex items-center justify-between">
+                        <div className="flex-1">
+                            <p className="text-sm font-medium text-slate-900 dark:text-white">รายงานรายสัปดาห์ (Weekly)</p>
+                            <p className="text-xs text-slate-500 dark:text-slate-400">แผนงานภาพรวมทุกต้นสัปดาห์</p>
+                        </div>
+                        <div className="flex items-center gap-4">
+                            <label className="relative inline-flex items-center cursor-pointer">
+                                <input
+                                    type="checkbox"
+                                    {...form.register('preferences.briefing_weekly_enabled')}
+                                    className="sr-only peer"
+                                />
+                                <div className="w-9 h-5 bg-slate-200 peer-focus:outline-none rounded-full peer dark:bg-slate-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all dark:border-gray-600 peer-checked:bg-primary"></div>
+                            </label>
+                        </div>
+                    </div>
+
+                    {/* Monthly Report */}
+                    <div className="flex items-center justify-between">
+                        <div className="flex-1">
+                            <p className="text-sm font-medium text-slate-900 dark:text-white">รายงานรายเดือน (Monthly)</p>
+                            <p className="text-xs text-slate-500 dark:text-slate-400">สรุปความสำเร็จทุกต้นเดือน</p>
+                        </div>
+                        <div className="flex items-center gap-4">
+                            <label className="relative inline-flex items-center cursor-pointer">
+                                <input
+                                    type="checkbox"
+                                    {...form.register('preferences.briefing_monthly_enabled')}
+                                    className="sr-only peer"
+                                />
+                                <div className="w-9 h-5 bg-slate-200 peer-focus:outline-none rounded-full peer dark:bg-slate-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all dark:border-gray-600 peer-checked:bg-primary"></div>
+                            </label>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
     );
 }
+

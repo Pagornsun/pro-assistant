@@ -56,6 +56,14 @@ export function ProfileForm() {
                         theme: data.preferences.theme || 'system',
                         language: data.preferences.language || 'th',
                         notifications: data.preferences.notifications ?? true,
+                        timezone: data.preferences.timezone || 'Asia/Bangkok',
+                        reminder_lead_time: data.preferences.reminder_lead_time || 15,
+                        briefing_daily_enabled: data.preferences.briefing_daily_enabled ?? true,
+                        briefing_daily_time: data.preferences.briefing_daily_time || '08:00',
+                        briefing_weekly_enabled: data.preferences.briefing_weekly_enabled ?? true,
+                        briefing_weekly_time: data.preferences.briefing_weekly_time || '08:00',
+                        briefing_monthly_enabled: data.preferences.briefing_monthly_enabled ?? true,
+                        briefing_monthly_time: data.preferences.briefing_monthly_time || '08:00',
                     }
                 });
             }
