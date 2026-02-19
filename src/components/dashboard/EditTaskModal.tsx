@@ -3,14 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { X, Check } from 'lucide-react';
 import { LoadingSpinner } from '@/components/ui/States';
-
-interface Task {
-    id: string;
-    title: string;
-    description?: string;
-    status: 'pending' | 'processing' | 'done' | 'cancelled';
-    due_date?: string;
-}
+import { Task, TaskStatus } from '@/lib/types';
 
 interface EditTaskModalProps {
     task: Task | null;
@@ -20,11 +13,12 @@ interface EditTaskModalProps {
     lineUserId: string;
 }
 
-const STATUS_OPTIONS = [
+const STATUS_OPTIONS: { value: TaskStatus; label: string }[] = [
     { value: 'pending', label: 'รอดำเนินการ' },
     { value: 'processing', label: 'กำลังดำเนินการ' },
     { value: 'done', label: 'เสร็จสิ้น' },
     { value: 'cancelled', label: 'ยกเลิก' },
+    { value: 'pending_payment', label: 'รอชำระเงิน' },
 ];
 
 export function EditTaskModal({ task, isOpen, onClose, onSaved, lineUserId }: EditTaskModalProps) {

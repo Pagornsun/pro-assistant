@@ -1,5 +1,6 @@
 import { EventEmitter } from 'events';
 import { supabaseAdmin } from '../src/lib/supabase';
+import { rateLimit } from '../src/lib/rate-limit';
 import { analyzeTask, analyzeImage } from '../src/lib/gemini';
 
 // Mock fetch globally for showLoadingAnimation
@@ -44,8 +45,9 @@ jest.mock('@line/bot-sdk', () => {
     };
 });
 
-// 3. Now require line.ts after the mock is established
-const { handleLineEvent, cleanToken, getOrCreateProfile } = require('../src/lib/line');
+// Import after mocks
+import { handleLineEvent, cleanToken, getOrCreateProfile } from '../src/lib/line';
+import { Client, WebhookEvent } from '@line/bot-sdk';
 
 describe('LINE Integration Logic', () => {
 
@@ -97,7 +99,7 @@ describe('LINE Integration Logic', () => {
         });
 
         it('should handle "follow" event', async () => {
-            const event: any = { type: 'follow', source: { userId: mockUserId }, replyToken: mockReplyToken };
+            const event = { type: 'follow', source: { userId: mockUserId }, replyToken: mockReplyToken } as unknown as WebhookEvent;
             await handleLineEvent(event);
 
             expect(mockReplyMessage).toHaveBeenCalledWith(
@@ -113,12 +115,12 @@ describe('LINE Integration Logic', () => {
                 description: 'Test Desc'
             });
 
-            const event: any = {
+            const event = {
                 type: 'message',
                 message: { type: 'text', text: 'Create task', id: 'm1' },
                 source: { userId: mockUserId },
                 replyToken: mockReplyToken
-            };
+            } as unknown as WebhookEvent;
 
             await handleLineEvent(event);
 
@@ -133,12 +135,12 @@ describe('LINE Integration Logic', () => {
                 receiver: 'Shop'
             });
 
-            const event: any = {
+            const event = {
                 type: 'message',
                 message: { type: 'image', id: 'img1' },
                 source: { userId: mockUserId },
                 replyToken: mockReplyToken
-            };
+            } as unknown as WebhookEvent;
 
             await handleLineEvent(event);
 

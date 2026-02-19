@@ -1,4 +1,5 @@
 
+/* eslint-disable @typescript-eslint/no-require-imports */
 const { GoogleGenerativeAI } = require('@google/generative-ai');
 const fs = require('fs');
 const path = require('path');

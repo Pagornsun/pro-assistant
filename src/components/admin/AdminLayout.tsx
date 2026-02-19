@@ -11,20 +11,28 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     const router = useRouter();
     const [loading, setLoading] = useState(true);
 
-    useEffect(() => {
-        checkAuth();
-    }, []);
-
-    async function checkAuth() {
-        const { data: { user } } = await supabase.auth.getUser();
-        if (!user) {
+    const checkAuth = React.useCallback(async () => {
+        try {
+            const { data: { user } } = await supabase.auth.getUser();
+            if (!user) {
+                router.replace('/admin/login');
+                return;
+            }
+        } catch (err: unknown) {
+            // Log the error or handle it appropriately, e.g., redirect to login
+            console.error("Authentication check failed:", err);
             router.replace('/admin/login');
             return;
         }
-        // Optional: Check role from profile here too, but layout mostly ensures session exists.
-        // API calls will enforce 403.
         setLoading(false);
-    }
+    }, [router]);
+
+    useEffect(() => {
+        const verify = async () => {
+            await checkAuth();
+        };
+        verify();
+    }, [checkAuth]);
 
     const handleLogout = async () => {
         await supabase.auth.signOut();
@@ -56,8 +64,8 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                                 key={item.href}
                                 href={item.href}
                                 className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-colors ${isActive
-                                        ? 'bg-primary/10 text-primary'
-                                        : 'text-gray-400 hover:bg-gray-800 hover:text-white'
+                                    ? 'bg-primary/10 text-primary'
+                                    : 'text-gray-400 hover:bg-gray-800 hover:text-white'
                                     }`}
                             >
                                 <item.icon size={20} />

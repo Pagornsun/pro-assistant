@@ -46,8 +46,11 @@ export async function POST(request: NextRequest) {
         }
 
         // 3. Send Reminders
-        const results = await Promise.allSettled(tasks.map(async (task: any) => {
-            const lineUserId = task.profiles?.line_user_id;
+        const results = await Promise.allSettled(tasks.map(async (task) => {
+            // Supabase inner join may return as array
+            const profiles = task.profiles;
+            const profile = Array.isArray(profiles) ? profiles[0] : (profiles as unknown as { line_user_id: string; display_name: string });
+            const lineUserId = profile?.line_user_id;
 
             if (lineUserId) {
                 // Send LINE Message
@@ -114,8 +117,8 @@ export async function POST(request: NextRequest) {
             sent: successCount
         });
 
-    } catch (err: any) {
+    } catch (err: unknown) {
         console.error('Cron Error:', err);
-        return NextResponse.json({ success: false, error: err.message }, { status: 500 });
+        return NextResponse.json({ success: false, error: err instanceof Error ? err.message : 'Unknown error' }, { status: 500 });
     }
 }

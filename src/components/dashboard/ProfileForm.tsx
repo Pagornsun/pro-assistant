@@ -7,7 +7,7 @@ import { updateProfileSchema, type UpdateProfileInput } from '@/lib/schemas';
 import { User, Save, Loader2, Moon, Sun, Monitor, Bell, Globe, Calendar } from 'lucide-react';
 import { useLiff } from '@/components/providers/LiffProvider';
 import { DataStateHandler } from '@/components/shared/DataStateHandler';
-import { ErrorState, LoadingSpinner } from '@/components/ui/States';
+import { UserProfile } from '@/lib/types';
 import toast from 'react-hot-toast';
 
 export function ProfileForm() {
@@ -15,7 +15,7 @@ export function ProfileForm() {
     const [isLoading, setIsLoading] = useState(true);
     const [isSaving, setIsSaving] = useState(false);
     const [fetchError, setFetchError] = useState<string | null>(null);
-    const [profileData, setProfileData] = useState<any>(null);
+    const [profileData, setProfileData] = useState<UserProfile | null>(null);
 
     const form = useForm<UpdateProfileInput>({
         resolver: zodResolver(updateProfileSchema),
@@ -40,8 +40,8 @@ export function ProfileForm() {
             setFetchError(null);
             const res = await fetch(`/api/profile?lineUserId=${lineUserId}`);
             if (!res.ok) throw new Error('Failed to fetch profile');
-            const json = await res.json();
-            const data = json.data ?? json;
+            const apiResponse = await res.json();
+            const data = apiResponse.data ?? apiResponse;
 
             setProfileData(data);
 
@@ -79,8 +79,8 @@ export function ProfileForm() {
             if (!res.ok) throw new Error('Failed to update');
 
             toast.success('บันทึกข้อมูลเรียบร้อยแล้ว');
-        } catch (error) {
-            console.error('Update profile error:', error);
+        } catch (err: unknown) {
+            console.error('Update profile error:', err);
             toast.error('เกิดข้อผิดพลาดในการบันทึก');
         } finally {
             setIsSaving(false);
@@ -106,10 +106,10 @@ export function ProfileForm() {
         <DataStateHandler
             isLoading={isLoading && !profileData}
             error={fetchError}
-            data={profileData}
+            data={profileData || undefined}
             onRetry={() => liffProfile?.userId && fetchProfile(liffProfile.userId)}
         >
-            {(data) => (
+            {(data: UserProfile) => (
                 <div className="max-w-xl mx-auto space-y-8">
                     {/* Header Info */}
                     <div className="flex items-center gap-4 p-4 bg-white dark:bg-zinc-800 rounded-xl border border-slate-100 dark:border-zinc-700 shadow-sm">

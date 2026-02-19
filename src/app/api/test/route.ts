@@ -22,8 +22,8 @@ export async function GET() {
             } else {
                 adminStatus = 'OK (Service Role Working)';
             }
-        } catch (e: any) {
-            adminStatus = `Exception: ${e.message}`;
+        } catch (e: unknown) {
+            adminStatus = `Exception: ${e instanceof Error ? e.message : 'Unknown error'}`;
         }
 
         return NextResponse.json({
@@ -33,11 +33,8 @@ export async function GET() {
             timestamp: new Date().toISOString()
         });
 
-    } catch (error: any) {
-        console.error('Test API Error:', error);
-        return NextResponse.json({
-            success: false,
-            error: error.message
-        }, { status: 500 });
+    } catch (err: unknown) {
+        console.error('Test API Error:', err);
+        return NextResponse.json({ error: err instanceof Error ? err.message : 'Unknown error' }, { status: 500 });
     }
 }

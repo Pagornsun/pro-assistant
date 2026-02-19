@@ -46,9 +46,9 @@ export async function GET(req: Request) {
                         .eq('id', task.id);
 
                     results.reminder_24h++;
-                } catch (e: any) {
+                } catch (e: unknown) {
                     console.error(`Failed to send 24h reminder for task ${task.id}`, e);
-                    results.errors.push(`Task ${task.id} (24h): ${e.message}`);
+                    results.errors.push(`Task ${task.id} (24h): ${e instanceof Error ? e.message : 'Unknown error'}`);
                 }
             }
         }
@@ -83,17 +83,17 @@ export async function GET(req: Request) {
                         .eq('id', task.id);
 
                     results.reminder_1h++;
-                } catch (e: any) {
+                } catch (e: unknown) {
                     console.error(`Failed to send 1h reminder for task ${task.id}`, e);
-                    results.errors.push(`Task ${task.id} (1h): ${e.message}`);
+                    results.errors.push(`Task ${task.id} (1h): ${e instanceof Error ? e.message : 'Unknown error'}`);
                 }
             }
         }
 
         return NextResponse.json({ success: true, results });
 
-    } catch (error: any) {
+    } catch (error: unknown) {
         console.error('Cron Job Failed:', error);
-        return NextResponse.json({ error: error.message }, { status: 500 });
+        return NextResponse.json({ error: error instanceof Error ? error.message : 'Unknown error' }, { status: 500 });
     }
 }

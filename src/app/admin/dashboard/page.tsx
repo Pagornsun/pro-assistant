@@ -3,7 +3,6 @@
 import React, { useEffect, useState } from 'react';
 import AdminLayout from '@/components/admin/AdminLayout';
 import { Users, CheckCircle, TrendingUp, Activity } from 'lucide-react';
-// We don't have chart.js installed. Just Stats Cards.
 
 interface Stats {
     totalUsers: number;
@@ -94,14 +93,21 @@ export default function AdminDashboardPage() {
     );
 }
 
-function StatCard({ title, value, icon: Icon, trend, color }: any) {
+interface StatCardProps {
+    title: string;
+    value: string | number;
+    icon: React.ElementType;
+    trend?: string;
+    color: string;
+}
+
+function StatCard({ title, value, icon: Icon, trend, color }: StatCardProps) {
     return (
         <div className="bg-gray-800 border border-gray-700/50 p-6 rounded-2xl shadow-xl">
             <div className="flex justify-between items-start mb-4">
                 <div className={`p-3 rounded-xl ${color}`}>
                     <Icon size={24} />
                 </div>
-                {/* <span className="text-xs font-medium text-emerald-400 bg-emerald-400/10 px-2 py-1 rounded-full">{trend}</span> */}
             </div>
             <div>
                 <p className="text-gray-400 text-sm font-medium mb-1">{title}</p>

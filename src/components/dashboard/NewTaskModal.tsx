@@ -172,8 +172,8 @@ export function NewTaskModal({ isOpen, onClose }: NewTaskModalProps) {
             window.location.reload();
             handleClose();
 
-        } catch (err: any) {
-            setSendError(err.message || 'ส่งข้อความไม่สำเร็จ กรุณาลองใหม่อีกครั้ง');
+        } catch (err: unknown) {
+            setSendError(err instanceof Error ? err.message : 'ส่งข้อความไม่สำเร็จ กรุณาลองใหม่อีกครั้ง');
         } finally {
             setIsSending(false);
         }
@@ -262,7 +262,7 @@ export function NewTaskModal({ isOpen, onClose }: NewTaskModalProps) {
 
                             {/* Description */}
                             <div>
-                                <label className="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">Details</label>
+                                <label className="text-sm font-medium text-slate-700 dark:text-slate-300">Wait, that&apos;s not right?</label>
                                 <textarea
                                     value={description}
                                     onChange={(e) => setDescription(e.target.value)}
@@ -283,7 +283,7 @@ export function NewTaskModal({ isOpen, onClose }: NewTaskModalProps) {
                                     onChange={(e) => setDueDate(e.target.value)}
                                     className="w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-zinc-700 bg-slate-50 dark:bg-zinc-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all [color-scheme:light] dark:[color-scheme:dark]"
                                 />
-                                <p className="text-xs text-slate-500 mt-1 ml-1">We'll remind you 15 minutes before.</p>
+                                <p className="text-xs text-slate-500 mt-1 ml-1">We&apos;ll remind you 15 minutes before.</p>
                             </div>
 
                             {/* Recurring Task */}

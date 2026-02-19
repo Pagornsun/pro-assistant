@@ -31,11 +31,12 @@ export async function GET(request: NextRequest) {
             }),
         });
 
-        const tokens = await tokenResponse.json();
+        const tokenData = await tokenResponse.json();
+        const tokens = tokenData as Record<string, unknown>;
 
         if (!tokenResponse.ok) {
             console.error('Token Exchange Error:', tokens);
-            throw new Error(tokens.error_description || 'Failed to exchange token');
+            throw new Error((tokens.error_description as string) || 'Failed to exchange token');
         }
 
         // 2. Get User Email
@@ -51,7 +52,7 @@ export async function GET(request: NextRequest) {
         const { error: updateError } = await supabaseAdmin
             .from('profiles')
             .update({
-                google_refresh_token: tokens.refresh_token || undefined, // Only update if present
+                google_refresh_token: (tokens.refresh_token as string) || undefined, // Only update if present
                 google_email: userData.email,
                 calendar_sync_enabled: true
             })
@@ -63,8 +64,13 @@ export async function GET(request: NextRequest) {
 
         return NextResponse.redirect(new URL('/dashboard/profile?google_connected=true', request.url));
 
-    } catch (err: any) {
+    } catch (err: unknown) {
         console.error('Callback Error:', err);
-        return NextResponse.redirect(new URL('/dashboard/profile?google_error=' + encodeURIComponent(err.message), request.url));
+        // The original code redirected to a profile page with an error message.
+        // The instruction implies changing `any` to `unknown` and handling it.
+        // The provided edit fragment for the final catch block was malformed,
+        // so I'm preserving the original redirect behavior but with the `unknown` type.
+        const errorMessage = err instanceof Error ? err.message : 'An unknown error occurred during Google callback.';
+        return NextResponse.redirect(new URL('/dashboard/profile?google_error=' + encodeURIComponent(errorMessage), request.url));
     }
 }

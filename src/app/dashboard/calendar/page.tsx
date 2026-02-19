@@ -9,7 +9,7 @@ import { Skeleton, EmptyState } from '@/components/ui/States';
 export default function CalendarPage() {
     const router = useRouter();
     const { profile } = useLiff();
-    const [events, setEvents] = useState<any[]>([]);
+    const [events, setEvents] = useState<unknown[]>([]);
     const [loading, setLoading] = useState(true);
     const [fetchError, setFetchError] = useState<string | null>(null);
 

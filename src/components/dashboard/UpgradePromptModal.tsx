@@ -31,7 +31,7 @@ export default function UpgradePromptModal({ isOpen, onClose }: UpgradePromptMod
                         Daily Limit Reached
                     </h2>
                     <p className="text-text-secondary text-sm px-4">
-                        You've used your 5 free tasks for today. Upgrade to <span className="text-amber-500 font-bold">Pro</span> for unlimited access.
+                        You&lsquo;ve reached the 10-task limit for free users. Upgrade to <span className="text-amber-500 font-bold">Pro</span> for unlimited tasks and priority support!
                     </p>
                 </div>
 

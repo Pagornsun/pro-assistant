@@ -1,7 +1,9 @@
-import { ClientConfig, Client, WebhookEvent, TextMessage } from '@line/bot-sdk';
+import { ClientConfig, Client, WebhookEvent, TextMessage, Message } from '@line/bot-sdk';
 import { analyzeTask, analyzeImage } from './gemini';
 import { supabaseAdmin } from './supabase';
 import { getTaskFlexMessage } from './flex';
+import { getWelcomeFlexMessage } from './flex-welcome';
+import { getOnboardingFlexMessage } from './flex-onboarding';
 
 // Helper to clean the token
 export const cleanToken = (token: string) => {
@@ -17,7 +19,7 @@ const getClientConfig = (): ClientConfig => ({
 export const lineClient = new Proxy({} as Client, {
     get: (_target, prop) => {
         const client = new Client(getClientConfig());
-        return (client as any)[prop];
+        return (client as unknown as Record<string | symbol, unknown>)[prop];
     }
 });
 
@@ -25,11 +27,12 @@ export const lineClient = new Proxy({} as Client, {
 const getConfig = () => getClientConfig();
 
 // Helper to safely reply
-async function safeReply(replyToken: string, userId: string, message: any) {
+async function safeReply(replyToken: string, userId: string, message: Message | Message[]) {
     try {
         await lineClient.replyMessage(replyToken, message);
-    } catch (error: any) {
-        console.warn('Reply failed, trying Push...', error.message);
+    } catch (error: unknown) {
+        const errorMessage = error instanceof Error ? error.message : String(error);
+        console.warn('Reply failed, trying Push...', errorMessage);
         try {
             await lineClient.pushMessage(userId, message);
         } catch (pushError) {
@@ -76,13 +79,9 @@ async function saveChatMessage(userId: string, role: 'user' | 'assistant', messa
     });
 }
 
-// Legacy imports
-import { getWelcomeFlexMessage } from './flex-welcome';
-import { getOnboardingFlexMessage } from './flex-onboarding';
-
 // Helper: Get or Create Profile
 export async function getOrCreateProfile(lineUserId: string) {
-    let { data: profile } = await supabaseAdmin.from('profiles').select('id, tutorial_step').eq('line_user_id', lineUserId).single();
+    const { data: profile } = await supabaseAdmin.from('profiles').select('id, tutorial_step').eq('line_user_id', lineUserId).single();
     if (profile) return profile;
 
     // Create Auth User & Profile
@@ -162,23 +161,16 @@ export async function handleLineEvent(event: WebhookEvent) {
         } else if (event.source.type === 'room') {
             groupId = event.source.roomId;
         }
-        // Reply logic uses replyToken, so it works for groups automatically.
-        // Push logic needs to know if it should push to user or group (but safeReply handles replyToken first).
 
         // 1. Text Message
         if (event.message.type === 'text') {
             const userMessage = event.message.text;
 
-            // In groups, only respond if mentioned or specific keywords (optional, for now respond to all)
-            // But to avoid noise, maybe we only respond to known commands or if it looks like a task?
-            // For MVP: Respond to everything but maybe add a filter later.
-
-            await showLoadingAnimation(lineUserId); // Animation shows to user? In groups it might not work well for others.
+            await showLoadingAnimation(lineUserId);
 
             // Rich Menu Commands
             if (userMessage === 'New Task') {
-                const liffUrl = `https://liff.line.me/${process.env.NEXT_PUBLIC_LIFF_ID}?action=new-task`;
-                // ... (Send Flex)
+                // Return simple liff link or something
                 return { userId: lineUserId };
             }
 
@@ -188,8 +180,6 @@ export async function handleLineEvent(event: WebhookEvent) {
             }
 
             // AI Text Analysis
-            // Don't save group chat history for now to avoid privacy issues or confusion?
-            // Or save with groupId? For now, only save user history context.
             await saveChatMessage(profile.id, 'user', userMessage);
             const history = await getChatHistory(profile.id);
             const analysis = await analyzeTask(userMessage, history);
@@ -211,13 +201,11 @@ export async function handleLineEvent(event: WebhookEvent) {
                     title: analysis.title,
                     description: analysis.description,
                     status: 'pending',
-                    line_group_id: groupId // Save Group ID
+                    line_group_id: groupId
                 }).throwOnError();
                 await safeReply(event.replyToken, lineUserId, getTaskFlexMessage(analysis.title, analysis.description));
                 await saveChatMessage(profile.id, 'assistant', `Created Task: ${analysis.title}`);
             } else {
-                // In groups, maybe don't reply to casual chat unless directly addressed?
-                // For MVP, if it's not a task, we reply.
                 await safeReply(event.replyToken, lineUserId, { type: 'text', text: analysis.replyText || 'ครับผม' });
                 await saveChatMessage(profile.id, 'assistant', analysis.replyText || 'ครับผม');
             }
@@ -229,7 +217,6 @@ export async function handleLineEvent(event: WebhookEvent) {
 
             try {
                 const buffer = await getMessageContent(event.message.id);
-                // Assume JPEG/PNG
                 const analysis = await analyzeImage(buffer, 'image/jpeg');
 
                 if (analysis.is_slip) {
@@ -240,7 +227,7 @@ export async function handleLineEvent(event: WebhookEvent) {
                         user_id: profile.id,
                         title: title,
                         description: desc + '\n(Slip Verified)',
-                        status: 'pending', // or 'done' if expense tracking only
+                        status: 'pending',
                         tags: ['Expense', 'Slip']
                     }).throwOnError();
 
@@ -255,7 +242,7 @@ export async function handleLineEvent(event: WebhookEvent) {
                     });
                 }
 
-            } catch (e: any) {
+            } catch (e: unknown) {
                 console.error('Image Processing Error:', e);
                 await safeReply(event.replyToken, lineUserId, { type: 'text', text: 'ขออภัย เกิดข้อผิดพลาดในการอ่านรูปครับ' });
             }

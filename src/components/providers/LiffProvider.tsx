@@ -2,76 +2,92 @@
 
 import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import liff from '@line/liff';
+import { UserProfile } from '@/lib/types';
 
 interface LiffContextType {
     liff: typeof liff | null;
-    profile: any | null;
+    profile: (UserProfile & { userId?: string; displayName?: string; pictureUrl?: string; statusMessage?: string }) | null;
     error: string | null;
     isLoggedIn: boolean;
 }
 
-const LiffContext = createContext<LiffContextType>({
-    liff: null,
-    profile: null,
-    error: null,
-    isLoggedIn: false,
-});
+const LiffContext = createContext<LiffContextType | undefined>(undefined);
 
-export const useLiff = () => useContext(LiffContext);
+export const useLiff = () => {
+    const context = useContext(LiffContext);
+    if (!context) {
+        throw new Error('useLiff must be used within a LiffProvider');
+    }
+    return context;
+};
 
 export const LiffProvider = ({ children }: { children: ReactNode }) => {
     const [liffObject, setLiffObject] = useState<typeof liff | null>(null);
-    const [profile, setProfile] = useState<any | null>(null);
+    const [profile, setProfile] = useState<(UserProfile & { userId?: string; displayName?: string; pictureUrl?: string; statusMessage?: string }) | null>(() => {
+        if (typeof window !== 'undefined' && process.env.NEXT_PUBLIC_MOCK_LIFF === 'true') {
+            return {
+                id: 'mock-uuid',
+                line_user_id: 'mock-user-id',
+                tier: 'free',
+                userId: 'mock-user-id',
+                displayName: 'Test User',
+                pictureUrl: 'https://via.placeholder.com/150',
+                statusMessage: 'Mocking is fun'
+            };
+        }
+        return null;
+    });
     const [error, setError] = useState<string | null>(null);
-    const [isLoggedIn, setIsLoggedIn] = useState(false);
+    const [isLoggedIn, setIsLoggedIn] = useState(() => {
+        if (typeof window !== 'undefined' && process.env.NEXT_PUBLIC_MOCK_LIFF === 'true') {
+            return true;
+        }
+        return false;
+    });
 
     useEffect(() => {
         // MOCK MODE FOR E2E TESTING
         if (process.env.NEXT_PUBLIC_MOCK_LIFF === 'true') {
             console.log('⚠️ LIFF MOCK MODE ENABLED ⚠️');
-            setProfile({
-                userId: 'mock-user-id',
-                displayName: 'Test User',
-                pictureUrl: 'https://via.placeholder.com/150',
-                statusMessage: 'Mocking is fun'
-            });
-            setIsLoggedIn(true);
-            setLiffObject({
-                id: 'mock-liff-id',
-                ready: Promise.resolve(),
-                init: () => Promise.resolve(),
-                getProfile: () => Promise.resolve({ userId: 'mock-user-id', displayName: 'Test User' }),
-                isLoggedIn: () => true,
-                getDecodedIDToken: () => ({ email: 'test@example.com' }),
-                closeWindow: () => { },
-                logout: () => { },
-                login: () => { },
-            } as any);
+            setTimeout(() => {
+                const mockLiff = {
+                    id: 'mock-liff-id',
+                    ready: Promise.resolve(),
+                    init: () => Promise.resolve(),
+                    getProfile: () => Promise.resolve({
+                        userId: 'mock-user-id',
+                        displayName: 'Test User',
+                        pictureUrl: 'https://via.placeholder.com/150',
+                        statusMessage: 'Mocking is fun'
+                    }),
+                    isLoggedIn: () => true,
+                    getDecodedIDToken: () => ({ email: 'test@example.com' }),
+                    closeWindow: () => { },
+                    logout: () => { },
+                    login: () => { },
+                } as unknown as typeof liff;
+                setLiffObject(mockLiff);
+                setIsLoggedIn(true);
+            }, 0);
             return;
         }
 
-        // Fallback to hardcoded ID if env is missing or malformed (e.g. newlines)
-        const LIFF_ID = (process.env.NEXT_PUBLIC_LIFF_ID || '2009152458-0jLBmnkp').trim();
-
-        if (!LIFF_ID) {
-            console.warn('LIFF_ID is not defined in environment variables.');
-            setError('LIFF_ID is missing');
-            return;
-        }
-
-        liff.init({ liffId: LIFF_ID })
+        liff.init({ liffId: process.env.NEXT_PUBLIC_LIFF_ID! })
             .then(() => {
                 setLiffObject(liff);
                 if (liff.isLoggedIn()) {
                     setIsLoggedIn(true);
                     liff.getProfile()
-                        .then((prof) => setProfile(prof))
-                        .catch((err) => console.error('Failed to get profile:', err));
+                        .then((prof: unknown) => setProfile(prof as (UserProfile & { userId?: string; displayName?: string; pictureUrl?: string; statusMessage?: string })))
+                        .catch((err: unknown) => {
+                            console.error('Failed to get profile:', err);
+                            setError(err instanceof Error ? err.message : 'Failed to get profile');
+                        });
                 }
             })
-            .catch((err: any) => {
+            .catch((err: unknown) => {
                 console.error('LIFF Init Failed:', err);
-                setError(err.toString());
+                setError(err instanceof Error ? err.message : 'Failed to initialize LIFF');
             });
     }, []);
 

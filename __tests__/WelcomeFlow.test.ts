@@ -20,7 +20,6 @@ jest.mock('../src/lib/supabase', () => ({
         auth: {
             admin: {
                 listUsers: jest.fn(),
-                createUser: jest.fn(),
             }
         }
     }
@@ -28,7 +27,7 @@ jest.mock('../src/lib/supabase', () => ({
 
 // Import after mocks
 import { handleLineEvent, lineClient } from '../src/lib/line';
-const { Client } = require('@line/bot-sdk');
+import { Client, WebhookEvent } from '@line/bot-sdk';
 
 describe('Welcome Flow Logic', () => {
     const mockUserId = 'U1234567890abcdef';
@@ -49,7 +48,8 @@ describe('Welcome Flow Logic', () => {
         const mockProfileQuery = {
             select: jest.fn().mockReturnThis(),
             eq: jest.fn().mockReturnThis(),
-            single: jest.fn().mockResolvedValue({ data: { id: 'user-uuid-123', line_user_id: mockUserId }, error: null }),
+            single: jest.fn().mockResolvedValue({ data: { id: mockUserId, tutorial_step: 0 }, error: null }),
+            insert: jest.fn().mockReturnThis(),
             update: jest.fn().mockReturnThis(),
             throwOnError: jest.fn().mockReturnThis()
         };
@@ -79,13 +79,13 @@ describe('Welcome Flow Logic', () => {
     });
 
     it('should send Welcome Flex Message on "follow" event', async () => {
-        const event: any = {
+        const event = {
             type: 'follow',
             replyToken: mockReplyToken,
             source: { userId: mockUserId, type: 'user' },
             timestamp: 1234567890,
             mode: 'active'
-        };
+        } as unknown as WebhookEvent;
 
         await handleLineEvent(event);
 
@@ -97,14 +97,14 @@ describe('Welcome Flow Logic', () => {
     });
 
     it('should send Welcome Flex Message on "help" keyword', async () => {
-        const event: any = {
+        const event = {
             type: 'message',
             message: { type: 'text', text: 'help', id: 'msg123' },
             replyToken: mockReplyToken,
             source: { userId: mockUserId, type: 'user' },
             timestamp: 1234567890,
             mode: 'active'
-        };
+        } as unknown as WebhookEvent;
 
         await handleLineEvent(event);
 
@@ -115,14 +115,14 @@ describe('Welcome Flow Logic', () => {
     });
 
     it('should send Welcome Flex Message on "สวัสดี" keyword (exact match)', async () => {
-        const event: any = {
+        const event = {
             type: 'message',
             message: { type: 'text', text: 'สวัสดี', id: 'msg123' },
             replyToken: mockReplyToken,
             source: { userId: mockUserId, type: 'user' },
             timestamp: 1234567890,
             mode: 'active'
-        };
+        } as unknown as WebhookEvent;
 
         await handleLineEvent(event);
 

@@ -1,5 +1,7 @@
-const fs = require('fs');
+/* eslint-disable @typescript-eslint/no-require-imports */
 const path = require('path');
+const fs = require('fs');
+/* eslint-disable @typescript-eslint/no-require-imports */
 const Stripe = require('stripe');
 
 // Manually load .env.local

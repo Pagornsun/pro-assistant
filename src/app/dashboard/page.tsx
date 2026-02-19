@@ -25,22 +25,23 @@ import { EditTaskModal } from '@/components/dashboard/EditTaskModal';
 import { DeleteTaskButton } from '@/components/dashboard/DeleteTaskButton';
 import { DataStateHandler } from '@/components/shared/DataStateHandler';
 import { FullPageLoader, EmptyState, ErrorState, TaskCardSkeleton } from '@/components/ui/States';
+import { Task } from '@/lib/types';
 
 export default function UserDashboard() {
     const { profile, isLoggedIn, error } = useLiff();
-    const [tasks, setTasks] = useState<any[]>([]);
+    const [tasks, setTasks] = useState<Task[]>([]);
     const [membership, setMembership] = useState<string>('free');
     const [loading, setLoading] = useState(true);
     const [fetchError, setFetchError] = useState<string | null>(null);
     const [isTaskModalOpen, setIsTaskModalOpen] = useState(false);
     const [isSettingsOpen, setIsSettingsOpen] = useState(false);
     const [paymentStatus, setPaymentStatus] = useState<string | null>(null);
-    const [selectedTask, setSelectedTask] = useState<any | null>(null);
+    const [selectedTask, setSelectedTask] = useState<Task | null>(null);
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
     const [usage, setUsage] = useState({ count: 0, limit: 5 });
 
     // Optimistic update: replace task in list immediately after save
-    const handleTaskSaved = (updatedTask: any) => {
+    const handleTaskSaved = (updatedTask: Task) => {
         setTasks(prev => prev.map(t => t.id === updatedTask.id ? updatedTask : t));
     };
 
@@ -96,9 +97,9 @@ export default function UserDashboard() {
                     limit: data.usageLimit || 5
                 });
             }
-        } catch (err) {
-            console.error('[Dashboard] Fetch error:', err);
-            setFetchError('ไม่สามารถโหลดข้อมูลได้ กรุณาลองใหม่อีกครั้ง');
+        } catch (err: unknown) { // Changed to err: unknown
+            console.error('[Dashboard] Fetch error:', err); // Kept original console log for context
+            setFetchError(err instanceof Error ? err.message : 'เกิดข้อผิดพลาด'); // Changed setError to setFetchError
         } finally {
             setLoading(false);
         }

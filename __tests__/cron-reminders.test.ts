@@ -2,6 +2,7 @@
 /**
  * @jest-environment node
  */
+import { NextRequest } from 'next/server';
 import { POST } from '@/app/api/cron/reminders/route';
 import { supabaseAdmin } from '@/lib/supabase';
 import { lineClient } from '@/lib/line';
@@ -78,7 +79,7 @@ describe('Cron Reminders API', () => {
             headers: { 'Authorization': 'Bearer test-secret' }
         });
 
-        const res = await POST(req as any);
+        const res = await POST(req as unknown as NextRequest);
         const body = await res.json();
 
         expect(res.status).toBe(200);
@@ -113,7 +114,7 @@ describe('Cron Reminders API', () => {
             headers: { 'Authorization': 'Bearer test-secret' }
         });
 
-        const res = await POST(req as any);
+        const res = await POST(req as unknown as NextRequest);
         const body = await res.json();
 
         expect(res.status).toBe(200);

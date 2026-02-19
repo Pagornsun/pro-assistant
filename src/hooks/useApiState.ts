@@ -5,7 +5,7 @@ import { toast } from 'react-hot-toast';
 
 interface UseApiStateOptions<T> {
     onSuccess?: (data: T) => void;
-    onError?: (error: any) => void;
+    onError?: (error: unknown) => void;
     successMessage?: string;
 }
 
@@ -15,7 +15,7 @@ interface UseApiStateOptions<T> {
  */
 export function useApiState<T>(options?: UseApiStateOptions<T>) {
     const [isLoading, setIsLoading] = useState(false);
-    const [error, setError] = useState<any | null>(null);
+    const [error, setError] = useState<unknown | null>(null);
     const [data, setData] = useState<T | null>(null);
 
     const execute = useCallback(async (apiCall: () => Promise<T>) => {
@@ -32,7 +32,7 @@ export function useApiState<T>(options?: UseApiStateOptions<T>) {
 
             options?.onSuccess?.(result);
             return result;
-        } catch (err: any) {
+        } catch (err: unknown) {
             setError(err);
             handleApiError(err);
             options?.onError?.(err);
@@ -55,9 +55,10 @@ export function useApiState<T>(options?: UseApiStateOptions<T>) {
  * Centralized error handler for API calls.
  * Maps status codes to user-friendly Thai messages as per ui_states_design_guide.md.
  */
-function handleApiError(error: any) {
-    const status = error.status || error.response?.status;
-    const message = error.message || 'เกิดข้อผิดพลาด';
+function handleApiError(error: unknown) {
+    const apiError = error as { status?: number; response?: { status?: number }; message?: string };
+    const status = apiError.status || apiError.response?.status;
+    const message = apiError.message || 'เกิดข้อผิดพลาด';
 
     switch (status) {
         case 401:

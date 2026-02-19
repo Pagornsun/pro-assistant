@@ -5,8 +5,15 @@ import AdminLayout from '@/components/admin/AdminLayout';
 import { Search, ChevronLeft, ChevronRight } from 'lucide-react';
 import { format } from 'date-fns';
 
+interface User {
+    id: string;
+    line_user_id: string | null;
+    tier: string;
+    created_at: string | null;
+}
+
 export default function AdminUsersPage() {
-    const [users, setUsers] = useState<any[]>([]);
+    const [users, setUsers] = useState<User[]>([]);
     const [loading, setLoading] = useState(true);
     const [search, setSearch] = useState('');
     const [page, setPage] = useState(1);
@@ -21,13 +28,13 @@ export default function AdminUsersPage() {
         setLoading(true);
         try {
             const res = await fetch(`/api/admin/users?search=${search}&page=${page}`);
-            const json = await res.json();
+            const json: { data: User[]; meta: { totalPages: number } } = await res.json();
             if (json.data) {
                 setUsers(json.data);
                 setTotalPages(json.meta.totalPages);
             }
-        } catch (err) {
-            console.error(err);
+        } catch (err: unknown) {
+            console.error('Failed to fetch users:', err);
         } finally {
             setLoading(false);
         }
@@ -95,8 +102,8 @@ export default function AdminUsersPage() {
                                         </td>
                                         <td className="px-6 py-4">
                                             <span className={`inline-flex items-center px-2 py-1 rounded text-xs font-medium uppercase ${user.tier === 'pro'
-                                                    ? 'bg-amber-500/10 text-amber-500 border border-amber-500/20'
-                                                    : 'bg-gray-700 text-gray-300'
+                                                ? 'bg-amber-500/10 text-amber-500 border border-amber-500/20'
+                                                : 'bg-gray-700 text-gray-300'
                                                 }`}>
                                                 {user.tier}
                                             </span>

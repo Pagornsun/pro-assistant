@@ -57,7 +57,7 @@ export async function GET(request: NextRequest) {
         }
 
         return apiSuccess({ tasks: tasks || [], total: count ?? 0, limit, offset });
-    } catch (err) {
+    } catch (err: unknown) {
         console.error('[GET /api/tasks] Unexpected error:', err);
         return errors.internal();
     }
@@ -120,7 +120,7 @@ export async function POST(request: NextRequest) {
             }
         }
 
-        const payload: any = {
+        const payload: Record<string, unknown> = {
             user_id: profile.id,
             title: input.title,
             description: input.description ?? null,
@@ -137,9 +137,9 @@ export async function POST(request: NextRequest) {
             .single();
 
         // RESILIENT RETRY: If columns are missing (PGRST204), try basic insert
-        if (taskError && (taskError as any).code === 'PGRST204') {
+        if (taskError && (taskError as unknown as Record<string, unknown>).code === 'PGRST204') {
             console.warn('[POST /api/tasks] Schema mismatch detected, retrying with basic columns');
-            const basicPayload = {
+            const basicPayload: Record<string, unknown> = {
                 user_id: profile.id,
                 title: input.title,
                 description: input.description ?? null,
@@ -160,7 +160,7 @@ export async function POST(request: NextRequest) {
         }
 
         return apiSuccess(task, 201);
-    } catch (err) {
+    } catch (err: unknown) {
         console.error('[POST /api/tasks] Unexpected error:', err);
         return errors.internal();
     }

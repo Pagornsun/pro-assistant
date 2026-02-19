@@ -4,13 +4,14 @@ import { ChevronLeft, CheckCircle, Clock } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useLiff } from '@/components/providers/LiffProvider';
 import { DataStateHandler } from '@/components/shared/DataStateHandler';
-import { TaskCardSkeleton, EmptyState } from '@/components/ui/States';
+import { Skeleton, EmptyState } from '@/components/ui/States';
+import { Task } from '@/lib/types';
 import { TaskSearch } from '@/components/dashboard/TaskSearch';
 
 export default function TasksPage() {
     const router = useRouter();
     const { profile } = useLiff();
-    const [tasks, setTasks] = useState<any[]>([]);
+    const [tasks, setTasks] = useState<Task[]>([]);
     const [loading, setLoading] = useState(true);
     const [fetchError, setFetchError] = useState<string | null>(null);
     const [searchParams, setSearchParams] = useState({ query: '', status: 'all' });
@@ -71,7 +72,7 @@ export default function TasksPage() {
                 isEmpty={tasks.length === 0}
                 loadingSkeleton={
                     <div className="flex flex-col gap-3">
-                        {[1, 2, 3, 4, 5, 6].map(i => <TaskCardSkeleton key={i} />)}
+                        {[1, 2, 3, 4, 5, 6].map(i => <Skeleton key={i} />)}
                     </div>
                 }
                 emptyState={

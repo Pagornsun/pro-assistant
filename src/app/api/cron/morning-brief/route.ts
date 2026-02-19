@@ -105,8 +105,8 @@ export async function POST(request: NextRequest) {
 
         return NextResponse.json({ success: true, sent, total: profiles.length });
 
-    } catch (err: any) {
+    } catch (err: unknown) {
         console.error('Morning Brief Error:', err);
-        return NextResponse.json({ success: false, error: err.message }, { status: 500 });
+        return NextResponse.json({ success: false, error: err instanceof Error ? err.message : 'Unknown error' }, { status: 500 });
     }
 }

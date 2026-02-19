@@ -1,7 +1,7 @@
-
 /**
  * @jest-environment node
  */
+import { NextRequest } from 'next/server';
 import { GET, PATCH } from '@/app/api/profile/route';
 import { supabaseAdmin } from '@/lib/supabase';
 
@@ -45,7 +45,7 @@ describe('Profile API', () => {
             });
 
             const req = new Request('http://localhost:3000/api/profile?lineUserId=line-123');
-            const res = await GET(req as any);
+            const res = await GET(req as unknown as NextRequest);
             const body = await res.json();
 
             expect(res.status).toBe(200);
@@ -55,7 +55,7 @@ describe('Profile API', () => {
 
         it('should return 401 if lineUserId is missing', async () => {
             const req = new Request('http://localhost:3000/api/profile'); // No query param
-            const res = await GET(req as any);
+            const res = await GET(req as unknown as NextRequest);
 
             expect(res.status).toBe(401);
         });
@@ -70,7 +70,7 @@ describe('Profile API', () => {
             });
 
             const req = new Request('http://localhost:3000/api/profile?lineUserId=unknown');
-            const res = await GET(req as any);
+            const res = await GET(req as unknown as NextRequest);
             const body = await res.json();
 
             expect(res.status).toBe(404);
@@ -135,7 +135,7 @@ describe('Profile API', () => {
                 }),
             });
 
-            const res = await PATCH(req as any);
+            const res = await PATCH(req as unknown as NextRequest);
             const body = await res.json();
 
             expect(res.status).toBe(200);
@@ -150,7 +150,7 @@ describe('Profile API', () => {
                 }),
             });
 
-            const res = await PATCH(req as any);
+            const res = await PATCH(req as unknown as NextRequest);
 
             expect(res.status).toBe(401);
         });
@@ -164,7 +164,7 @@ describe('Profile API', () => {
                 }),
             });
 
-            const res = await PATCH(req as any);
+            const res = await PATCH(req as unknown as NextRequest);
             const body = await res.json();
 
             expect(res.status).toBe(422);

@@ -1,6 +1,7 @@
 /**
  * @jest-environment node
  */
+import { NextRequest } from 'next/server';
 import { POST } from '@/app/api/cron/morning-brief/route';
 import { supabaseAdmin } from '@/lib/supabase';
 import { lineClient } from '@/lib/line';
@@ -32,12 +33,12 @@ describe('Morning Brief Cron API', () => {
 
         // Mock production env
         const originalEnv = process.env.NODE_ENV;
-        (process.env as any).NODE_ENV = 'production';
+        (process.env as { NODE_ENV: string }).NODE_ENV = 'production';
 
-        const res = await POST(req as any);
+        const res = await POST(req as unknown as NextRequest);
         expect(res.status).toBe(401);
 
-        (process.env as any).NODE_ENV = originalEnv;
+        (process.env as { NODE_ENV: string }).NODE_ENV = originalEnv;
     });
 
     it('should send brief to users with pending tasks', async () => {
@@ -77,7 +78,7 @@ describe('Morning Brief Cron API', () => {
             return { select: jest.fn() };
         });
 
-        const res = await POST(req as any);
+        const res = await POST(req as unknown as NextRequest);
         const json = await res.json();
 
         expect(json.success).toBe(true);

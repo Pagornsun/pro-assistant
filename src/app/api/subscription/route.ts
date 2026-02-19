@@ -57,7 +57,7 @@ export async function GET(request: NextRequest) {
             tier: 'pro',
             status: subscription.status,
             cancel_at_period_end: subscription.cancel_at_period_end,
-            current_period_end: new Date(((subscription as any).current_period_end || 0) * 1000).toISOString(),
+            current_period_end: new Date((subscription.current_period_end || 0) * 1000).toISOString(),
             subscription_id: subscription.id,
         });
 
@@ -107,7 +107,7 @@ export async function DELETE(request: NextRequest) {
         return apiSuccess({
             status: updatedSub.status,
             cancel_at_period_end: updatedSub.cancel_at_period_end,
-            current_period_end: new Date(((updatedSub as any).current_period_end || 0) * 1000).toISOString(),
+            current_period_end: new Date((updatedSub.current_period_end || 0) * 1000).toISOString(),
         });
 
     } catch (error) {

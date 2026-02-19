@@ -18,10 +18,11 @@ function makeRequest(pathname: string, ip = '127.0.0.1'): NextRequest {
 }
 
 describe('rateLimit', () => {
-    beforeEach(() => {
+    beforeEach(async () => {
         // Reset module to clear the in-memory store
         jest.resetModules();
-        rateLimit = require('@/lib/rate-limit').rateLimit;
+        const mockedModule = await import('../src/lib/rate-limit');
+        rateLimit = mockedModule.rateLimit;
     });
 
     it('allows requests under the limit', () => {

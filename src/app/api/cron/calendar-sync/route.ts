@@ -3,6 +3,16 @@ import { supabaseAdmin } from '@/lib/supabase';
 
 export const dynamic = 'force-dynamic';
 
+interface GoogleCalendarEvent {
+    id: string;
+    summary: string;
+    description?: string;
+    start: {
+        dateTime?: string;
+        date?: string;
+    };
+}
+
 export async function POST(request: NextRequest) {
     // 1. Security Check
     const authHeader = request.headers.get('authorization');
@@ -35,7 +45,7 @@ export async function POST(request: NextRequest) {
                         grant_type: 'refresh_token',
                     }),
                 });
-                const tokens = await tokenRes.json();
+                const tokens = (await tokenRes.json()) as Record<string, unknown>;
                 if (!tokens.access_token) throw new Error('Failed to refresh token');
 
                 // B. Fetch Calendar Events (Next 7 Days)
@@ -47,7 +57,7 @@ export async function POST(request: NextRequest) {
                     `https://www.googleapis.com/calendar/v3/calendars/primary/events?timeMin=${now.toISOString()}&timeMax=${nextWeek.toISOString()}&singleEvents=true&orderBy=startTime`,
                     { headers: { Authorization: `Bearer ${tokens.access_token}` } }
                 );
-                const calendarData = await calendarRes.json();
+                const calendarData = (await calendarRes.json()) as { items?: GoogleCalendarEvent[] };
                 const events = calendarData.items || [];
 
                 // C. Sync to Tasks
@@ -79,16 +89,16 @@ export async function POST(request: NextRequest) {
                 }
                 return { userId: profile.id, synced: syncedCount };
 
-            } catch (innerErr: any) {
+            } catch (innerErr: unknown) {
                 console.error(`Sync failed for user ${profile.id}:`, innerErr);
-                return { userId: profile.id, error: innerErr.message };
+                return { userId: profile.id, error: innerErr instanceof Error ? innerErr.message : 'Unknown error' };
             }
         }));
 
         return NextResponse.json({ success: true, results });
 
-    } catch (err: any) {
+    } catch (err: unknown) {
         console.error('Calendar Sync Cron Error:', err);
-        return NextResponse.json({ success: false, error: err.message }, { status: 500 });
+        return NextResponse.json({ success: false, error: err instanceof Error ? err.message : 'Unknown error' }, { status: 500 });
     }
 }

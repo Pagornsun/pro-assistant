@@ -90,7 +90,7 @@ test.describe('E2E Bill Splitting Flow', () => {
 
             // 4. Check JSONB details
             if (task.bill_split_details) {
-                const details = task.bill_split_details as any;
+                const details = task.bill_split_details as { total: number; people_count: number };
                 expect(details.total).toBe(totalAmount);
                 expect(details.people_count).toBe(peopleCount);
             } else {

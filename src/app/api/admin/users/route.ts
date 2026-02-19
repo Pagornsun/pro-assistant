@@ -32,32 +32,7 @@ export async function GET(req: NextRequest) {
             .order('created_at', { ascending: false })
             .range(from, to);
 
-        // NOTE: Searching JSONB preferences or unindexed columns might be slow.
-        // Assuming we want to search by display name (which might be in preferences? No, line_user_id is in columns)
-        // Wait, `profiles` table: id, line_user_id, tier, preferences.
-        // Where is displayName? It's usually in `preferences->displayName` or pulled from Line.
-        // DisplayName is NOT a column in `profiles` based on `supabase_schema.sql`.
-        // It's in `preferences` JSONB?
-        // Let's check `LiffProvider` or `webhook`.
-
-        // In `webhook`, `handleLineEvent` updates profile?
-        // Let's Assume `preferences` stores `displayName`.
-
         if (search) {
-            // Search line_user_id or preferences->displayName
-            // Postgres JSON search: preferences->>'displayName' ILIKE ...
-            // Supabase filter: .ilike('preferences->>displayName', `%${search}%`) -- Syntax might vary
-            // Or .textSearch
-
-            // Getting simple: Search `line_user_id` only for now, or filter in memory if small?
-            // "List all users, search by name/email"
-            // Email is in `auth.users`, NOT `public.profiles`.
-            // Joining `auth.users` is hard with Supabase Client (requires RPC or direct DB access).
-            // `supabaseAdmin.auth.admin.listUsers()` can verify emails.
-
-            // Strategy: Use `supabaseAdmin.auth.admin.listUsers()` but it doesn't support complex search easily combined with profiles.
-
-            // MVP Solution: Just return profiles. Identify by `line_user_id`.
             query = query.ilike('line_user_id', `%${search}%`);
         }
 
@@ -74,8 +49,8 @@ export async function GET(req: NextRequest) {
             }
         });
 
-    } catch (error: any) {
+    } catch (error: unknown) {
         console.error('[AdminUsers] Error:', error);
-        return NextResponse.json({ error: error.message }, { status: 500 });
+        return NextResponse.json({ error: error instanceof Error ? error.message : 'Unknown error' }, { status: 500 });
     }
 }
