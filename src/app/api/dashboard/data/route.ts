@@ -1,3 +1,7 @@
+import { NextRequest } from 'next/server';
+import { supabaseAdmin } from '@/lib/supabase';
+import { apiSuccess, errors } from '@/lib/api-response';
+import { rateLimit } from '@/lib/rate-limit';
 import { getOrCreateProfile } from '@/lib/line';
 
 export async function GET(request: NextRequest) {
