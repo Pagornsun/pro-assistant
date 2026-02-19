@@ -11,8 +11,13 @@ const manrope = Manrope({
 });
 
 export const metadata: Metadata = {
-  title: "Kinn - Pro Assistant",
+  title: "Kinn | Pro Assistant",
   description: "AI-Powered Personal Assistant for Professionals",
+  openGraph: {
+    title: "Kinn | Pro Assistant",
+    description: "Manage tasks, groups, and productivity with AI.",
+    images: ["/og-image.png"]
+  }
 };
 
 export default function RootLayout({

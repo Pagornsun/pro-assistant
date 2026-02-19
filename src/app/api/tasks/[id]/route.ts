@@ -74,7 +74,12 @@ export async function PATCH(req: NextRequest, props: { params: Promise<{ id: str
                 .eq('id', userId)
                 .single();
 
-            const currentPoints = (profile?.points || 0) + 10;
+            // Dynamic points based on priority
+            let earnedPoints = 10;
+            if (updated.priority === 'high') earnedPoints = 30;
+            else if (updated.priority === 'medium') earnedPoints = 20;
+
+            const currentPoints = (profile?.points || 0) + earnedPoints;
             const newLevel = Math.floor(currentPoints / 100) + 1;
 
             await supabaseAdmin

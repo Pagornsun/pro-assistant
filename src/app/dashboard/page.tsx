@@ -18,6 +18,7 @@ import {
     Crown,
     LogIn,
     Users,
+    Trophy,
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
@@ -285,12 +286,12 @@ export default function UserDashboard() {
                             <span className="font-bold text-lg leading-tight text-slate-900 dark:text-white">My<br />Groups</span>
                         </Link>
 
-                        {/* Help Center */}
-                        <Link href="/dashboard/help" className="group flex flex-col items-start justify-between p-5 h-36 rounded-2xl bg-white dark:bg-zinc-800 border border-slate-100 dark:border-zinc-700 shadow-sm hover:shadow-md hover:-translate-y-1 transition-all duration-300">
-                            <div className="w-10 h-10 rounded-full bg-slate-100 dark:bg-zinc-700 text-slate-600 dark:text-slate-300 flex items-center justify-center group-hover:bg-primary group-hover:text-white transition-colors">
-                                <Headphones size={24} />
+                        {/* Leaderboard */}
+                        <Link href="/dashboard/leaderboard" className="group flex flex-col items-start justify-between p-5 h-36 rounded-2xl bg-white dark:bg-zinc-800 border border-slate-100 dark:border-zinc-700 shadow-sm hover:shadow-md hover:-translate-y-1 transition-all duration-300">
+                            <div className="w-10 h-10 rounded-full bg-amber-50 dark:bg-amber-900/20 text-amber-600 dark:text-amber-400 flex items-center justify-center group-hover:bg-amber-600 group-hover:text-white transition-colors">
+                                <Trophy size={24} />
                             </div>
-                            <span className="font-bold text-lg leading-tight text-slate-900 dark:text-white">Help<br />Center</span>
+                            <span className="font-bold text-lg leading-tight text-slate-900 dark:text-white">Rankings<br />Global</span>
                         </Link>
                     </div>
 

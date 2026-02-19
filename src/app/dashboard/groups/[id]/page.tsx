@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, use } from 'react';
 import { useLiff } from '@/components/providers/LiffProvider';
 import {
     Users,
@@ -16,8 +16,9 @@ import { useRouter, useParams } from 'next/navigation';
 import { toast } from 'react-hot-toast';
 import { DataStateHandler } from '@/components/shared/DataStateHandler';
 
-export default function GroupDetailPage() {
-    const { id: groupId } = useParams();
+export default function GroupDetailPage(props: { params: Promise<{ id: string }> }) {
+    const params = use(props.params);
+    const groupId = params.id;
     const { profile } = useLiff();
     const router = useRouter();
     const [group, setGroup] = useState<any>(null);
@@ -59,6 +60,12 @@ export default function GroupDetailPage() {
                             <p className="text-xs text-slate-500">Shared Workspace</p>
                         </div>
                     </div>
+                    <button
+                        onClick={() => router.push(`/dashboard/groups/${groupId}/edit`)}
+                        className="p-2 hover:bg-white dark:hover:bg-zinc-900 rounded-full transition-colors text-slate-500"
+                    >
+                        <Shield size={20} />
+                    </button>
                 </div>
 
                 <div className="bg-gradient-to-br from-primary to-blue-600 rounded-3xl p-6 text-white shadow-xl shadow-primary/20">

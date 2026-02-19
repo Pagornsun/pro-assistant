@@ -10,6 +10,7 @@ interface DataStateHandlerProps<T> {
     isEmpty?: boolean;
     children: (data: T) => ReactNode;
     emptyState?: ReactNode;
+    emptyMessage?: string;
     loadingSkeleton?: ReactNode;
     onRetry?: () => void;
 }
@@ -25,6 +26,7 @@ export function DataStateHandler<T>({
     isEmpty = false,
     children,
     emptyState,
+    emptyMessage,
     loadingSkeleton,
     onRetry,
 }: DataStateHandlerProps<T>) {
@@ -55,7 +57,7 @@ export function DataStateHandler<T>({
             <div className="animate-in fade-in duration-500">
                 {emptyState || (
                     <div className="text-center py-10 text-slate-500 dark:text-slate-400">
-                        ไม่มีข้อมูลจะแสดงในขณะนี้
+                        {emptyMessage || 'ไม่มีข้อมูลจะแสดงในขณะนี้'}
                     </div>
                 )}
             </div>
