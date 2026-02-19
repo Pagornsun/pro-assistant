@@ -13,6 +13,9 @@ CREATE TABLE profiles (
     line_user_id TEXT UNIQUE,
     tier user_tier DEFAULT 'free',
     preferences JSONB DEFAULT '{}'::jsonb,
+    google_access_token TEXT,
+    google_refresh_token TEXT,
+    google_calendar_last_sync TIMESTAMP WITH TIME ZONE,
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 

@@ -23,8 +23,10 @@ export interface UserProfile {
     tier: 'free' | 'pro';
     tutorial_step?: number;
     preferences?: Record<string, unknown>;
+    google_access_token?: string | null;
     google_refresh_token?: string | null;
     google_email?: string | null;
+    google_calendar_last_sync?: string | null;
     created_at?: string;
     updated_at?: string;
 }
