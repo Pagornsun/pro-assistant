@@ -65,7 +65,8 @@ describe('LINE Integration Logic', () => {
             (supabaseAdmin.from as jest.Mock).mockReturnValue({
                 select: jest.fn().mockReturnThis(),
                 eq: jest.fn().mockReturnThis(),
-                single: jest.fn().mockResolvedValue({ data: mockProfile, error: null })
+                single: jest.fn().mockResolvedValue({ data: mockProfile, error: null }),
+                throwOnError: jest.fn().mockReturnThis()
             });
 
             const result = await getOrCreateProfile(mockLineUserId);
@@ -88,8 +89,9 @@ describe('LINE Integration Logic', () => {
                 order: jest.fn().mockReturnThis(),
                 limit: jest.fn().mockReturnThis(),
                 single: jest.fn().mockResolvedValue({ data: mockProfile, error: null }),
-                insert: jest.fn().mockResolvedValue({ data: {}, error: null }),
+                insert: jest.fn().mockReturnThis(),
                 update: jest.fn().mockReturnThis(),
+                throwOnError: jest.fn().mockReturnThis(),
             };
             (supabaseAdmin.from as jest.Mock).mockReturnValue(mockQuery);
         });

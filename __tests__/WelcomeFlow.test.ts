@@ -50,7 +50,8 @@ describe('Welcome Flow Logic', () => {
             select: jest.fn().mockReturnThis(),
             eq: jest.fn().mockReturnThis(),
             single: jest.fn().mockResolvedValue({ data: { id: 'user-uuid-123', line_user_id: mockUserId }, error: null }),
-            update: jest.fn().mockReturnThis()
+            update: jest.fn().mockReturnThis(),
+            throwOnError: jest.fn().mockReturnThis()
         };
 
         // Mock Chat History (Select & Insert)
@@ -59,7 +60,8 @@ describe('Welcome Flow Logic', () => {
             eq: jest.fn().mockReturnThis(),
             order: jest.fn().mockReturnThis(),
             limit: jest.fn().mockResolvedValue({ data: [], error: null }),
-            insert: jest.fn().mockResolvedValue({ error: null })
+            insert: jest.fn().mockReturnThis(),
+            throwOnError: jest.fn().mockReturnThis()
         };
 
         (supabaseAdmin.from as jest.Mock).mockImplementation((table) => {
@@ -69,8 +71,9 @@ describe('Welcome Flow Logic', () => {
                 select: jest.fn().mockReturnThis(),
                 eq: jest.fn().mockReturnThis(),
                 single: jest.fn().mockResolvedValue({ data: null, error: null }),
-                insert: jest.fn().mockResolvedValue({ error: null }),
-                update: jest.fn().mockReturnThis()
+                insert: jest.fn().mockReturnThis(),
+                update: jest.fn().mockReturnThis(),
+                throwOnError: jest.fn().mockReturnThis()
             };
         });
     });
