@@ -17,11 +17,15 @@ export async function GET(request: NextRequest) {
     }
 
     try {
-        const oauth2Client = new google.auth.OAuth2(
-            process.env.GOOGLE_CLIENT_ID,
-            process.env.GOOGLE_CLIENT_SECRET,
-            process.env.GOOGLE_REDIRECT_URI
-        );
+        const clientId = process.env.GOOGLE_CLIENT_ID;
+        const clientSecret = process.env.GOOGLE_CLIENT_SECRET;
+        const redirectUri = process.env.GOOGLE_REDIRECT_URI;
+
+        if (!clientId || !clientSecret || !redirectUri) {
+            throw new Error('Missing Google OAuth Env Vars');
+        }
+
+        const oauth2Client = new google.auth.OAuth2(clientId, clientSecret, redirectUri);
 
         const { tokens } = await oauth2Client.getToken(code);
         oauth2Client.setCredentials(tokens);

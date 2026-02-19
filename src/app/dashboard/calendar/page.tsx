@@ -1,10 +1,10 @@
 'use client';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, Suspense } from 'react';
 import { ChevronLeft, Calendar as CalendarIcon, AlertCircle, CheckCircle, ExternalLink, MapPin, Clock } from 'lucide-react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useLiff } from '@/components/providers/LiffProvider';
 import { DataStateHandler } from '@/components/shared/DataStateHandler';
-import { Skeleton, EmptyState, ErrorState } from '@/components/ui/States';
+import { Skeleton, EmptyState, ErrorState, FullPageLoader } from '@/components/ui/States';
 import { toast } from 'react-hot-toast';
 
 interface CalendarEvent {
@@ -16,7 +16,7 @@ interface CalendarEvent {
     location?: string;
 }
 
-export default function CalendarPage() {
+function CalendarContent() {
     const router = useRouter();
     const searchParams = useSearchParams();
     const { profile } = useLiff();
@@ -194,5 +194,13 @@ export default function CalendarPage() {
                 </DataStateHandler>
             )}
         </div>
+    );
+}
+
+export default function CalendarPage() {
+    return (
+        <Suspense fallback={<FullPageLoader />}>
+            <CalendarContent />
+        </Suspense>
     );
 }
