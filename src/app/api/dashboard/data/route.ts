@@ -1,7 +1,4 @@
-import { NextRequest } from 'next/server';
-import { supabaseAdmin } from '@/lib/supabase';
-import { apiSuccess, errors } from '@/lib/api-response';
-import { rateLimit } from '@/lib/rate-limit';
+import { getOrCreateProfile } from '@/lib/line';
 
 export async function GET(request: NextRequest) {
     const limited = rateLimit(request);
@@ -15,15 +12,14 @@ export async function GET(request: NextRequest) {
     }
 
     try {
-        // 1. Get Profile
-        const { data: profile, error: profileError } = await supabaseAdmin
-            .from('profiles')
-            .select('id, tier, preferences')
-            .eq('line_user_id', lineUserId)
-            .single();
-
-        if (profileError || !profile) {
-            // Return empty/default instead of error to avoid crashing UI on first login
+        // 1. Get or Create Profile
+        // If user accesses dashboard before following bot, they might not have a profile yet.
+        let profile;
+        try {
+            profile = await getOrCreateProfile(lineUserId);
+        } catch (err) {
+            console.error('[GET /api/dashboard/data] Profile creation failed:', err);
+            // Fallback to "Guest" mode if creation fails (should rarely happen)
             return apiSuccess({ profile: null, tasks: [], membership: 'free' });
         }
 
