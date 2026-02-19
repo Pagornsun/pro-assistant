@@ -86,8 +86,9 @@ export const LiffProvider = ({ children }: { children: ReactNode }) => {
                 }
             })
             .catch((err: unknown) => {
-                console.error('LIFF Init Failed:', err);
-                setError(err instanceof Error ? err.message : 'Failed to initialize LIFF');
+                const liffId = process.env.NEXT_PUBLIC_LIFF_ID;
+                console.error(`LIFF Init Failed (ID: ${liffId}):`, err);
+                setError(`(ID: ${liffId}) ${err instanceof Error ? err.message : 'Failed to initialize LIFF'}`);
             });
     }, []);
 
