@@ -73,7 +73,17 @@ function CalendarContent() {
 
     const handleConnect = () => {
         if (!profile?.userId) return;
-        window.location.href = `/api/auth/google/login?userId=${profile.userId}`;
+        const url = `/api/auth/google/login?userId=${profile.userId}`;
+
+        // Use LIFF to open in external browser (required for Google OAuth)
+        if (profile.userId && typeof window !== 'undefined' && (window as any).liff) {
+            (window as any).liff.openWindow({
+                url: window.location.origin + url,
+                external: true
+            });
+        } else {
+            window.location.href = url;
+        }
     };
 
     return (

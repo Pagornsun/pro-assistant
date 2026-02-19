@@ -52,10 +52,21 @@ export async function GET(request: NextRequest) {
             throw new Error('Failed to update profile');
         }
 
+        // Redirect based on Environment
+        const liffId = process.env.NEXT_PUBLIC_LIFF_ID;
+        if (liffId) {
+            return NextResponse.redirect(`https://liff.line.me/${liffId}/dashboard/calendar?success=true`);
+        }
+
         return NextResponse.redirect(new URL('/dashboard/calendar?success=true', request.url));
 
     } catch (err) {
         console.error('Callback Error:', err);
+        // Try to return to LIFF even on error
+        const liffId = process.env.NEXT_PUBLIC_LIFF_ID;
+        if (liffId) {
+            return NextResponse.redirect(`https://liff.line.me/${liffId}/dashboard/calendar?error=auth_failed`);
+        }
         return NextResponse.redirect(new URL('/dashboard/calendar?error=auth_failed', request.url));
     }
 }
