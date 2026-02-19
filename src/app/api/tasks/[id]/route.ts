@@ -104,15 +104,19 @@ export async function DELETE(req: NextRequest, props: { params: Promise<{ id: st
     const userId = await validateUser(req);
     if (!userId) return errors.unauthorized();
 
-    const { error } = await supabaseAdmin
+    const { error, count } = await supabaseAdmin
         .from('tasks')
-        .delete()
+        .delete({ count: 'exact' })
         .eq('id', params.id)
         .eq('user_id', userId);
 
     if (error) {
         console.error('[DELETE /api/tasks/[id]] DB Error:', error);
         return errors.internal();
+    }
+
+    if (count === 0) {
+        return errors.notFound('ไม่พบงานหรือผู่ใช้ไม่มีสิทธิ์');
     }
 
     return NextResponse.json({ success: true });
