@@ -26,8 +26,8 @@ jest.mock('../src/lib/supabase', () => ({
 }));
 
 // Import after mocks
-import { handleLineEvent, lineClient } from '../src/lib/line';
-import { Client, WebhookEvent } from '@line/bot-sdk';
+import { handleLineEvent } from '../src/lib/line';
+import { WebhookEvent } from '@line/bot-sdk';
 
 describe('Welcome Flow Logic', () => {
     const mockUserId = 'U1234567890abcdef';

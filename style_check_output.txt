@@ -1,0 +1,4 @@
+
+> pro-assistant@0.1.0 style-check
+> eslint . --max-warnings=200 --quiet || echo 'Lint warnings skipped'
+
