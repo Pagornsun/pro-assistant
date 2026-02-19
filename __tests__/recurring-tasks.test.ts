@@ -3,22 +3,30 @@
  */
 import { NextRequest } from 'next/server';
 import { PATCH } from '@/app/api/tasks/[id]/route';
-import { supabase } from '@/lib/supabase';
 
 // Mock Supabase
-jest.mock('@/lib/supabase', () => ({
-    supabase: {
-        auth: {
-            getUser: jest.fn(),
+jest.mock('@/lib/supabase', () => {
+    return {
+        supabase: {
+            auth: {
+                getUser: jest.fn(),
+            },
+            from: jest.fn().mockReturnThis(),
+            select: jest.fn().mockReturnThis(),
+            eq: jest.fn().mockReturnThis(),
+            update: jest.fn().mockReturnThis(),
+            insert: jest.fn().mockReturnThis(),
+            single: jest.fn().mockReturnThis(),
         },
-        from: jest.fn().mockReturnThis(),
-        select: jest.fn().mockReturnThis(),
-        eq: jest.fn().mockReturnThis(),
-        update: jest.fn().mockReturnThis(),
-        insert: jest.fn().mockReturnThis(),
-        single: jest.fn().mockReturnThis(),
-    },
-}));
+        supabaseAdmin: {
+            from: jest.fn().mockReturnThis(),
+            select: jest.fn().mockReturnThis(),
+            eq: jest.fn().mockReturnThis(),
+            single: jest.fn().mockReturnThis(),
+        }
+    };
+});
+import { supabase, supabaseAdmin } from '@/lib/supabase';
 
 describe('Recurring Tasks Logic (PATCH)', () => {
     const mockUser = { id: 'user-123' };
@@ -41,8 +49,17 @@ describe('Recurring Tasks Logic (PATCH)', () => {
         // Mock Update response (simulating the task transitioning to 'done')
         const updatedTask = { ...mockTask, status: 'done' };
 
+        // Mock validateUser
+        (supabaseAdmin.from as jest.Mock).mockReturnValueOnce({
+            select: jest.fn().mockReturnThis(),
+            eq: jest.fn().mockReturnThis(),
+            single: jest.fn().mockResolvedValue({ data: { id: 'user-123' }, error: null })
+        });
+
+
+
         // Mock chain for Update
-        (supabase.from as jest.Mock).mockReturnValueOnce({
+        (supabaseAdmin.from as jest.Mock).mockReturnValueOnce({
             update: jest.fn().mockReturnValue({
                 eq: jest.fn().mockReturnValue({
                     eq: jest.fn().mockReturnValue({
@@ -55,11 +72,11 @@ describe('Recurring Tasks Logic (PATCH)', () => {
         });
 
         // Mock Insert (for the new task)
-        (supabase.from as jest.Mock).mockReturnValueOnce({
+        (supabaseAdmin.from as jest.Mock).mockReturnValueOnce({
             insert: jest.fn().mockResolvedValue({ error: null })
         });
 
-        const req = new Request('http://localhost:3000/api/tasks/task-1', {
+        const req = new NextRequest('http://localhost:3000/api/tasks/task-1?lineUserId=user-123', {
             method: 'PATCH',
             body: JSON.stringify({ status: 'done' })
         });
@@ -69,9 +86,9 @@ describe('Recurring Tasks Logic (PATCH)', () => {
 
         // Verify insert was called for the NEXT task
         // We expect: same title, new due date (1 week later)
-        expect(supabase.from).toHaveBeenCalledTimes(2); // 1. Update, 2. Insert
+        expect(supabaseAdmin.from).toHaveBeenCalledTimes(3); // 1. Validate, 2. Update, 3. Insert
 
-        const insertCall = (supabase.from as jest.Mock).mock.calls[1]; // The second call to .from()
+        const insertCall = (supabaseAdmin.from as jest.Mock).mock.calls[2]; // The third call to .from()
         // Wait, supabase.from() returns a query builder.
         // We mocked it to return 'this' usually, but in my mock setup above I used mockReturnValueOnce chain.
         // Let's inspect the mocked method calls instead.
@@ -81,7 +98,14 @@ describe('Recurring Tasks Logic (PATCH)', () => {
         // Mock Update response (status changed to 'processing', not 'done')
         const updatedTask = { ...mockTask, status: 'processing' };
 
-        (supabase.from as jest.Mock).mockReturnValueOnce({
+        // Mock validateUser
+        (supabaseAdmin.from as jest.Mock).mockReturnValueOnce({
+            select: jest.fn().mockReturnThis(),
+            eq: jest.fn().mockReturnThis(),
+            single: jest.fn().mockResolvedValue({ data: { id: 'user-123' }, error: null })
+        });
+
+        (supabaseAdmin.from as jest.Mock).mockReturnValueOnce({
             update: jest.fn().mockReturnValue({
                 eq: jest.fn().mockReturnValue({
                     eq: jest.fn().mockReturnValue({
@@ -93,7 +117,7 @@ describe('Recurring Tasks Logic (PATCH)', () => {
             })
         });
 
-        const req = new Request('http://localhost:3000/api/tasks/task-1', {
+        const req = new NextRequest('http://localhost:3000/api/tasks/task-1?lineUserId=user-123', {
             method: 'PATCH',
             body: JSON.stringify({ status: 'processing' })
         });
@@ -101,7 +125,7 @@ describe('Recurring Tasks Logic (PATCH)', () => {
         const params = Promise.resolve({ id: 'task-1' });
         await PATCH(req as unknown as NextRequest, { params });
 
-        expect(supabase.from).toHaveBeenCalledTimes(1); // Only update
+        expect(supabaseAdmin.from).toHaveBeenCalledTimes(2); // 1. Validate, 2. Update
     });
 
     it('should calculate next due date correctly for weekly recurrence', async () => {
@@ -110,8 +134,15 @@ describe('Recurring Tasks Logic (PATCH)', () => {
         // Setup Mocks
         const insertMock = jest.fn().mockResolvedValue({ error: null });
 
+        // Mock validateUser
+        (supabaseAdmin.from as jest.Mock).mockReturnValueOnce({
+            select: jest.fn().mockReturnThis(),
+            eq: jest.fn().mockReturnThis(),
+            single: jest.fn().mockResolvedValue({ data: { id: 'user-123' }, error: null })
+        });
+
         // 1. Update Mock
-        (supabase.from as jest.Mock).mockReturnValueOnce({
+        (supabaseAdmin.from as jest.Mock).mockReturnValueOnce({
             update: jest.fn().mockReturnValue({
                 eq: jest.fn().mockReturnValue({
                     eq: jest.fn().mockReturnValue({
@@ -124,11 +155,11 @@ describe('Recurring Tasks Logic (PATCH)', () => {
         });
 
         // 2. Insert Mock
-        (supabase.from as jest.Mock).mockReturnValueOnce({
+        (supabaseAdmin.from as jest.Mock).mockReturnValueOnce({
             insert: insertMock
         });
 
-        const req = new Request('http://localhost:3000/api/tasks/task-1', {
+        const req = new NextRequest('http://localhost:3000/api/tasks/task-1?lineUserId=user-123', {
             method: 'PATCH',
             body: JSON.stringify({ status: 'done' })
         });
