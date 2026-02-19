@@ -1,9 +1,83 @@
 import { FlexMessage } from '@line/bot-sdk';
 
-export function getTaskFlexMessage(title: string, description: string | null): FlexMessage {
+export function getTaskFlexMessage(title: string, description: string | null, taskId?: string): FlexMessage {
+    const liffId = process.env.NEXT_PUBLIC_LIFF_ID;
+
     return {
         type: 'flex',
-        altText: `New Task Created: ${title}`,
+        altText: `New Task: ${title}`,
+        contents: {
+            type: 'bubble',
+            size: 'mega',
+            body: {
+                type: 'box',
+                layout: 'vertical',
+                contents: [
+                    {
+                        type: 'text',
+                        text: 'บันทึกงานใหม่แล้ว ✅',
+                        weight: 'bold',
+                        color: '#4B6BFB',
+                        size: 'sm'
+                    },
+                    {
+                        type: 'text',
+                        text: title,
+                        weight: 'bold',
+                        size: 'xl',
+                        margin: 'md',
+                        wrap: true
+                    },
+                    {
+                        type: 'text',
+                        text: description || 'No description',
+                        size: 'sm',
+                        color: '#8c8c8c',
+                        margin: 'md',
+                        wrap: true,
+                        maxLines: 2
+                    }
+                ],
+                paddingAll: '20px'
+            },
+            footer: {
+                type: 'box',
+                layout: 'vertical',
+                spacing: 'sm',
+                contents: [
+                    {
+                        type: 'button',
+                        action: {
+                            type: 'uri',
+                            label: 'ดูรายละเอียด',
+                            uri: taskId ? `https://liff.line.me/${liffId}/?path=/dashboard/tasks/${taskId}` : `https://liff.line.me/${liffId}/?path=/dashboard/tasks`
+                        },
+                        style: 'primary',
+                        color: '#4B6BFB',
+                        height: 'sm'
+                    },
+                    {
+                        type: 'button',
+                        action: {
+                            type: 'postback',
+                            label: 'เสร็จงานนี้',
+                            data: taskId ? `action=task_done&id=${taskId}` : 'action=none',
+                            displayText: 'ทำเครื่องหมายว่าเสร็จแล้ว'
+                        },
+                        style: 'secondary',
+                        height: 'sm'
+                    }
+                ],
+                paddingAll: '20px'
+            }
+        }
+    };
+}
+
+export function getBriefingFlexMessage(summary: string, taskCount: number): FlexMessage {
+    return {
+        type: 'flex',
+        altText: 'Morning Briefing from Kinn',
         contents: {
             type: 'bubble',
             size: 'mega',
@@ -13,22 +87,20 @@ export function getTaskFlexMessage(title: string, description: string | null): F
                 contents: [
                     {
                         type: 'text',
-                        text: 'NEW TASK CREATED',
+                        text: 'MORNING BRIEFING',
                         weight: 'bold',
-                        color: '#1DB446',
+                        color: '#4B6BFB',
                         size: 'xs'
                     },
                     {
                         type: 'text',
-                        text: title,
+                        text: 'สวัสดีตอนเช้าครับ! ☀️',
                         weight: 'bold',
                         size: 'xl',
-                        margin: 'md',
-                        wrap: true
+                        margin: 'md'
                     }
                 ],
-                paddingAll: '20px',
-                backgroundColor: '#ffffff'
+                paddingAll: '20px'
             },
             body: {
                 type: 'box',
@@ -36,60 +108,31 @@ export function getTaskFlexMessage(title: string, description: string | null): F
                 contents: [
                     {
                         type: 'text',
-                        text: description || 'No description provided.',
-                        size: 'sm',
-                        color: '#666666',
+                        text: summary,
                         wrap: true,
-                        maxLines: 3
+                        size: 'sm',
+                        color: '#333333'
+                    },
+                    {
+                        type: 'separator',
+                        margin: 'xl'
                     },
                     {
                         type: 'box',
-                        layout: 'horizontal',
+                        layout: 'vertical',
+                        margin: 'xl',
                         contents: [
                             {
-                                type: 'box',
-                                layout: 'vertical',
-                                contents: [
-                                    {
-                                        type: 'text',
-                                        text: 'Status',
-                                        size: 'xs',
-                                        color: '#aaaaaa'
-                                    },
-                                    {
-                                        type: 'text',
-                                        text: 'Pending',
-                                        size: 'sm',
-                                        color: '#333333',
-                                        weight: 'bold'
-                                    }
-                                ]
-                            },
-                            {
-                                type: 'box',
-                                layout: 'vertical',
-                                contents: [
-                                    {
-                                        type: 'text',
-                                        text: 'Date',
-                                        size: 'xs',
-                                        color: '#aaaaaa'
-                                    },
-                                    {
-                                        type: 'text',
-                                        text: new Date().toLocaleDateString('en-GB'),
-                                        size: 'sm',
-                                        color: '#333333',
-                                        weight: 'bold'
-                                    }
-                                ]
+                                type: 'text',
+                                text: `วันนี้คุณมีงานรออยู่ ${taskCount} รายการ`,
+                                size: 'xs',
+                                color: '#aaaaaa',
+                                margin: 'sm'
                             }
-                        ],
-                        margin: 'xl'
+                        ]
                     }
                 ],
-                paddingAll: '20px',
-                backgroundColor: '#ffffff'
+                paddingAll: '20px'
             },
             footer: {
                 type: 'box',
@@ -99,20 +142,15 @@ export function getTaskFlexMessage(title: string, description: string | null): F
                         type: 'button',
                         action: {
                             type: 'uri',
-                            label: 'View Dashboard',
-                            uri: 'https://liff.line.me/2009152458-0jLBmnkp'
+                            label: 'จัดการงานทั้งหมด',
+                            uri: `https://liff.line.me/${process.env.NEXT_PUBLIC_LIFF_ID}/?path=/dashboard/tasks`
                         },
                         style: 'primary',
-                        color: '#101522',
+                        color: '#4B6BFB',
                         height: 'sm'
                     }
                 ],
                 paddingAll: '20px'
-            },
-            styles: {
-                footer: {
-                    separator: true
-                }
             }
         }
     };

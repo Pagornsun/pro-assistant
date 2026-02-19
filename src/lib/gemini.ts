@@ -25,12 +25,14 @@ export async function analyzeTask(message: string, history: string = '') {
     
     1. Check if this is a request to SPLIT A BILL (e.g. "ค่าข้าว 500 หาร 3", "Dinner 1000 split 4", "หารค่าไฟ").
         - If yes, set isBillSplit = true.
-        - Extract total amount, currency (default THB), and number of people (if specified).
-        - If payers are mentioned (e.g. @A @B), list them.
+        - Extract total amount, currency (default THB), and number of people.
     
     2. If NOT a bill split, check if it is a request to CREATE A TASK.
         - If yes, set isTask = true.
         - Extract title and description.
+        - Extract due_date: Look for time expressions like "พรุ่งนี้", "วันจันทร์หน้า", "10 โมง", "next week". Convert to ISO8601 strings if possible, otherwise null. Current local time is ${new Date().toISOString()}.
+        - Extract tags: Suggest 1-3 relevant Thai tags (e.g., #งาน, #ส่วนตัว, #จ่ายเงิน).
+        - Extract priority: "high", "medium", or "low" based on urgency words.
 
     3. If neither, it is general conversation.
 
@@ -40,13 +42,16 @@ export async function analyzeTask(message: string, history: string = '') {
       "isBillSplit": boolean,
       "title": string (or null),
       "description": string (or null),
+      "due_date": string (ISO8601 or null),
+      "tags": string[],
+      "priority": "high" | "medium" | "low",
       "billDetails": {
         "total": number (or null),
-        "currency": string (default "THB"),
-        "people_count": number (default 1 if not specified but implies split),
-        "payers": string[] (names/mentions)
+        "currency": string,
+        "people_count": number,
+        "payers": string[]
       },
-      "replyText": string (Thai language, polite, concise 1-2 sentences. If bill split, summarize e.g. "Total 500, 125 per person")
+      "replyText": string (Thai language, polite, concise)
     }
   `;
 
@@ -80,16 +85,20 @@ export async function analyzeImage(imageBuffer: Buffer, mimeType: string) {
   const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
 
   const prompt = `
-    Analyze this image. It is likely a Thai Bank Transfer Slip.
-    Extract the following details in JSON format:
+    Analyze this image. It could be a Thai Bank Transfer Slip, a handwritten note, or a screenshot of a schedule.
+    Extract any tasks, plans, or expenses in JSON format:
     {
         "is_slip": boolean,
-        "amount": number,
+        "is_task": boolean,
+        "amount": number (if slip),
         "date": string (ISO8601 or null),
-        "receiver": string (Name or Bank),
-        "sender": string (Name or Bank)
+        "receiver": string (if slip),
+        "sender": string (if slip),
+        "extracted_tasks": [
+            { "title": string, "description": string, "due_date": string (null if unknown) }
+        ]
     }
-    If it is NOT a slip, set is_slip to false.
+    If it is NOT a slip AND contains no readable tasks, set both is_slip and is_task to false.
     `;
 
   try {
@@ -114,3 +123,26 @@ export async function analyzeImage(imageBuffer: Buffer, mimeType: string) {
     return { is_slip: false };
   }
 }
+
+export async function generateBriefing(tasks: any[]) {
+  const taskListText = tasks.map(t => `- ${t.title} (${t.priority || 'medium'})`).join('\n');
+  const prompt = `
+    You are "Kinn", a professional AI Personal Assistant (Thai language).
+    Here are the tasks for the user today:
+    ${taskListText}
+
+    Write a polite, encouraging, and concise morning briefing (2-3 sentences).
+    Mention the number of tasks and highlight if there are high priority ones.
+    Be friendly but professional. Do not use markdown (except newlines).
+  `;
+
+  try {
+    const result = await geminiModel.generateContent(prompt);
+    const response = await result.response;
+    return response.text().trim();
+  } catch (e) {
+    console.error("Gemini Briefing Generation Failed:", e);
+    return `สวัสดีครับ วันนี้คุณมีงาน ${tasks.length} รายการที่ต้องจัดการครับ สู้ๆ นะครับ!`;
+  }
+}
+

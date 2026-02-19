@@ -1,7 +1,7 @@
 import { ClientConfig, Client, WebhookEvent, TextMessage, Message } from '@line/bot-sdk';
-import { analyzeTask, analyzeImage } from './gemini';
+import { analyzeTask, analyzeImage, generateBriefing } from './gemini';
 import { supabaseAdmin } from './supabase';
-import { getTaskFlexMessage } from './flex';
+import { getTaskFlexMessage, getBriefingFlexMessage } from './flex';
 import { getWelcomeFlexMessage } from './flex-welcome';
 import { getOnboardingFlexMessage } from './flex-onboarding';
 
@@ -179,6 +179,31 @@ export async function handleLineEvent(event: WebhookEvent) {
                 return { userId: lineUserId };
             }
 
+            if (/^(summary|briefing|สรุป|สรุปงาน|ช่วยสรุปงาน)$/i.test(userMessage.trim())) {
+                const now = new Date();
+                const today = new Date(now.toLocaleString('en-US', { timeZone: 'Asia/Bangkok' }));
+                today.setHours(0, 0, 0, 0);
+                const tonight = new Date(today);
+                tonight.setHours(23, 59, 59, 999);
+
+                const { data: tasks } = await supabaseAdmin
+                    .from('tasks')
+                    .select('*')
+                    .eq('user_id', profile.id)
+                    .eq('status', 'pending')
+                    .gte('due_date', today.toISOString())
+                    .lte('due_date', tonight.toISOString());
+
+                if (tasks && tasks.length > 0) {
+                    const briefingText = await generateBriefing(tasks);
+                    const flex = getBriefingFlexMessage(briefingText, tasks.length);
+                    await safeReply(event.replyToken, lineUserId, flex);
+                } else {
+                    await safeReply(event.replyToken, lineUserId, { type: 'text', text: 'วันนี้ยังไม่มีงานในกำหนดส่งครับ พักผ่อนได้เต็มที่เลย! 😎' });
+                }
+                return { userId: lineUserId };
+            }
+
             // AI Text Analysis
             await saveChatMessage(profile.id, 'user', userMessage);
             const history = await getChatHistory(profile.id);
@@ -196,14 +221,20 @@ export async function handleLineEvent(event: WebhookEvent) {
                 await safeReply(event.replyToken, lineUserId, { type: 'text', text: analysis.replyText || 'Bill created.' });
                 await saveChatMessage(profile.id, 'assistant', `Created Bill: ${analysis.replyText}`);
             } else if (analysis.isTask) {
-                await supabaseAdmin.from('tasks').insert({
+                const { data: newTask, error: insertError } = await supabaseAdmin.from('tasks').insert({
                     user_id: profile.id,
                     title: analysis.title,
                     description: analysis.description,
                     status: 'pending',
+                    due_date: analysis.due_date || null,
+                    tags: analysis.tags || [],
+                    priority: analysis.priority || 'medium',
                     line_group_id: groupId
-                }).throwOnError();
-                await safeReply(event.replyToken, lineUserId, getTaskFlexMessage(analysis.title, analysis.description));
+                }).select('id').single();
+
+                if (insertError) throw insertError;
+
+                await safeReply(event.replyToken, lineUserId, getTaskFlexMessage(analysis.title, analysis.description, newTask.id));
                 await saveChatMessage(profile.id, 'assistant', `Created Task: ${analysis.title}`);
             } else {
                 await safeReply(event.replyToken, lineUserId, { type: 'text', text: analysis.replyText || 'ครับผม' });
@@ -235,10 +266,27 @@ export async function handleLineEvent(event: WebhookEvent) {
                         type: 'text',
                         text: `✅ บันทึกรายจ่ายเรียบร้อยครับ\nยอดเงิน: ${analysis.amount} บาท\nผู้รับ: ${analysis.receiver}`
                     });
+                } else if (analysis.is_task && analysis.extracted_tasks?.length > 0) {
+                    const tasks = analysis.extracted_tasks;
+                    for (const task of tasks) {
+                        await supabaseAdmin.from('tasks').insert({
+                            user_id: profile.id,
+                            title: task.title,
+                            description: task.description,
+                            status: 'pending',
+                            due_date: task.due_date || null,
+                            tags: ['OCR', 'Auto-created']
+                        }).throwOnError();
+                    }
+
+                    await safeReply(event.replyToken, lineUserId, {
+                        type: 'text',
+                        text: `✅ อ่านข้อมูลจากรูปภาพและบันทึกงานใหม่ให้ ${tasks.length} รายการแล้วครับ`
+                    });
                 } else {
                     await safeReply(event.replyToken, lineUserId, {
                         type: 'text',
-                        text: `ได้รับรูปภาพแล้วครับ แต่ดูเหมือนไม่ใช่สลิปโอนเงิน หรือผมอ่านไม่ออกครับ 😅`
+                        text: `ได้รับรูปภาพแล้วครับ แต่ดูเหมือนไม่มีข้อมูลงานหรือสลิปที่ผมอ่านได้ครับ 😅`
                     });
                 }
 
@@ -272,6 +320,13 @@ export async function handleLineEvent(event: WebhookEvent) {
             else if (action === 'tutorial_next_3') {
                 await supabaseAdmin.from('profiles').update({ tutorial_step: 4 }).eq('id', profile.id).throwOnError();
                 await safeReply(event.replyToken, lineUserId, getOnboardingFlexMessage(4));
+            }
+        }
+        else if (action === 'task_done') {
+            const taskId = data.get('id');
+            if (taskId) {
+                await supabaseAdmin.from('tasks').update({ status: 'done' }).eq('id', taskId).throwOnError();
+                await safeReply(event.replyToken, lineUserId, { type: 'text', text: 'เก่งมากครับ! ติ๊กถูกงานนี้ให้แล้วครับ ✅' });
             }
         }
     }
