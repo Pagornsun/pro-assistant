@@ -1,7 +1,8 @@
 'use client';
 
-import { ReactNode } from 'react';
+import { ReactNode, useState, useEffect } from 'react';
 import { useNetworkStatus } from '@/hooks/useNetworkStatus';
+import { X } from 'lucide-react';
 
 // ─────────────────────────────────────────────
 // Skeleton — animated placeholder while loading
@@ -177,8 +178,15 @@ export function FullPageLoader() {
 // ─────────────────────────────────────────────
 export function OfflineBanner() {
     const { isOnline } = useNetworkStatus();
+    const [dismissed, setDismissed] = useState(false);
 
-    if (isOnline) return null;
+    useEffect(() => {
+        if (isOnline) {
+            setDismissed(false);
+        }
+    }, [isOnline]);
+
+    if (isOnline || dismissed) return null;
 
     return (
         <div
@@ -189,7 +197,14 @@ export function OfflineBanner() {
             <svg className="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18.364 5.636a9 9 0 010 12.728M15.536 8.464a5 5 0 010 7.072M12 12h.01M8.464 15.536a5 5 0 010-7.072M5.636 18.364a9 9 0 010-12.728" />
             </svg>
-            ไม่มีการเชื่อมต่ออินเทอร์เน็ต กรุณาตรวจสอบการเชื่อมต่อของคุณ
+            <span className="flex-1 text-center">ไม่มีการเชื่อมต่ออินเทอร์เน็ต กรุณาตรวจสอบการเชื่อมต่อของคุณ</span>
+            <button
+                onClick={() => setDismissed(true)}
+                className="p-1 rounded-full hover:bg-white/20 transition-colors"
+                aria-label="ปิดแจ้งเตือน"
+            >
+                <X size={18} />
+            </button>
         </div>
     );
 }

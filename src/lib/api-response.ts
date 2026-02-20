@@ -1,5 +1,6 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { ZodError, ZodIssue } from 'zod';
+import { supabaseAdmin } from '@/lib/supabase';
 
 // ─────────────────────────────────────────────
 // Standard API Response Helpers
@@ -45,4 +46,25 @@ export const errors = {
     conflict: (message = 'ข้อมูลซ้ำกัน') => apiError('CONFLICT', message, 409),
     tooManyRequests: () => apiError('RATE_LIMIT', 'คำขอมากเกินไป กรุณารอสักครู่', 429),
     internal: (message = 'เกิดข้อผิดพลาดภายในระบบ') => apiError('INTERNAL_ERROR', message, 500),
+    badRequest: (message = 'คำขอไม่ถูกต้อง') => apiError('BAD_REQUEST', message, 400),
 };
+
+// ─────────────────────────────────────────────
+// Auth Helper
+// ─────────────────────────────────────────────
+
+export async function getUserIdFromRequest(req: NextRequest): Promise<string | null> {
+    const { searchParams } = new URL(req.url);
+    const lineUserId = searchParams.get('lineUserId') || req.headers.get('x-line-user-id');
+
+    if (!lineUserId) return null;
+
+    const { data } = await supabaseAdmin
+        .from('profiles')
+        .select('id')
+        .eq('line_user_id', lineUserId)
+        .single();
+
+    return data?.id || null;
+}
+

@@ -23,6 +23,8 @@ export interface UserProfile {
     id: string;
     line_user_id: string;
     tier: 'free' | 'pro';
+    display_name?: string | null;
+    picture_url?: string | null;
     tutorial_step?: number;
     preferences?: {
         theme?: 'light' | 'dark' | 'system';
@@ -47,4 +49,15 @@ export interface UserProfile {
     current_group_id?: string | null;
     created_at?: string;
     updated_at?: string;
+}
+
+export interface Notification {
+    id: string;
+    user_id: string;
+    title: string;
+    message?: string;
+    type: 'info' | 'success' | 'warning' | 'error' | 'promotion';
+    is_read: boolean;
+    action_link?: string;
+    created_at: string;
 }

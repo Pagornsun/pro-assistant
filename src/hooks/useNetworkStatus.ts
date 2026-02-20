@@ -7,12 +7,13 @@ import { useState, useEffect } from 'react';
  * Returns: { isOnline: boolean }
  */
 export function useNetworkStatus() {
-    const [isOnline, setIsOnline] = useState(() =>
-        typeof navigator !== 'undefined' ? navigator.onLine : true
-    );
+    const [isOnline, setIsOnline] = useState(true);
 
     useEffect(() => {
-        // listeners setup only
+        // Correct status on mount
+        if (typeof window !== 'undefined') {
+            setIsOnline(navigator.onLine);
+        }
 
         const handleOnline = () => setIsOnline(true);
         const handleOffline = () => setIsOnline(false);

@@ -19,6 +19,7 @@ import {
     LogIn,
     Users,
     Trophy,
+    Bell,
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
@@ -42,6 +43,7 @@ export default function UserDashboard() {
     const [fetchError, setFetchError] = useState<string | null>(null);
     const [isTaskModalOpen, setIsTaskModalOpen] = useState(false);
     const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+    const [unreadCount, setUnreadCount] = useState(0);
 
     const [selectedTask, setSelectedTask] = useState<Task | null>(null);
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
@@ -70,6 +72,20 @@ export default function UserDashboard() {
             // Auto-open New Task Modal
             if (urlParams.get('action') === 'new-task') {
                 setIsTaskModalOpen(true);
+            }
+            // Welcome from Onboarding
+            if (urlParams.get('welcome') === 'true') {
+                toast('👋 Welcome to Kinn! Let\'s create your first task.', {
+                    icon: '🚀',
+                    duration: 6000,
+                    style: {
+                        borderRadius: '10px',
+                        background: '#333',
+                        color: '#fff',
+                    },
+                });
+                // Slight delay to allow UI to settle
+                setTimeout(() => setIsTaskModalOpen(true), 1000);
             }
         }
     }, []);
@@ -105,6 +121,12 @@ export default function UserDashboard() {
                     count: data.usageCount || 0,
                     limit: data.usageLimit || 5
                 });
+
+                // Fetch Unread Notifications (Separate call for now)
+                fetch('/api/notifications').then(r => r.json()).then(json => {
+                    const unread = json.data?.filter((n: any) => !n.is_read).length || 0;
+                    setUnreadCount(unread);
+                }).catch(e => console.error('Notif fetch error', e));
             }
         } catch (err: unknown) { // Changed to err: unknown
             console.error('[Dashboard] Fetch error:', err); // Kept original console log for context
@@ -141,13 +163,22 @@ export default function UserDashboard() {
 
                 <header className="flex items-center justify-between px-6 pt-6 pb-2 sticky top-0 z-10 bg-background-light dark:bg-zinc-950">
                     <h1 className="text-2xl font-extrabold tracking-tight text-slate-900 dark:text-white">Kinn</h1>
-                    <button
-                        onClick={() => window.close()}
-                        aria-label="Close"
-                        className="w-10 h-10 flex items-center justify-center rounded-full bg-slate-200/50 dark:bg-slate-800/50 hover:bg-slate-300/50 transition-colors text-slate-900 dark:text-white"
-                    >
-                        <X size={24} />
-                    </button>
+                    <div className="flex items-center gap-3">
+                        <Link href="/dashboard/notifications" className="relative p-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors text-slate-900 dark:text-white">
+                            <Bell size={24} />
+                            {unreadCount > 0 && (
+                                <span className="absolute top-1.5 right-1.5 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-white dark:border-zinc-950"></span>
+                            )}
+                        </Link>
+                        {/* Only show Close button if in LIFF (optional, but keep for now) */}
+                        <button
+                            onClick={() => window.close()}
+                            aria-label="Close"
+                            className="w-10 h-10 flex items-center justify-center rounded-full bg-slate-200/50 dark:bg-slate-800/50 hover:bg-slate-300/50 transition-colors text-slate-900 dark:text-white"
+                        >
+                            <X size={24} />
+                        </button>
+                    </div>
                 </header>
 
                 <main className="flex-1 px-6 pb-8 overflow-y-auto no-scrollbar">
